@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SensoreAPPMVC.Models;
 using SensoreAPPMVC.Data;
 using System.Linq;
-
-
+using Microsoft.EntityFrameworkCore;
 
 namespace SensoreAPPMVC.Controllers
 {
@@ -23,33 +22,46 @@ namespace SensoreAPPMVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                // Here you would typically validate the user credentials against the database
-                /*
-                var user = _context.Users
-                    .FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
-
-                if (user != null)
-                {
-                    // User is authenticated, redirect to a secure area
-                    return RedirectToAction("Index", "Home");
-                }
-                */
-                if (!string.IsNullOrEmpty(model.Email) && !string.IsNullOrEmpty(model.Password))
-                {
-                    // For demonstration purposes, we assume any non-empty credentials are valid
-                    return RedirectToAction("Index", "Home");   
-                }
-    
-
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
             }
 
-            return View(model);
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == model.Email);
+            //serching the user database by the email provided
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
+            }
+            //plainText password check
+            if (user.Password == model.Password)
+            {
+                //redirecting to appropirate dashboard based on user role
+                switch(user.Role)
+                {
+                    case "Admin":
+                        return RedirectToAction("Dashboard", "Admin");
+                    case "Clinition":
+                        return RedirectToAction("Dashboard", "Clinition");
+                    case "patient":
+                        return RedirectToAction("Dashboard", "Patient");
+                    default:
+                        ModelState.AddModelError(string.Empty, "Invalid user role.");
+                        return View(model);
+                        
+                }
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
+            }
         }
+
+        
 
 
     }

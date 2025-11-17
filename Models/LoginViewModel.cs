@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SensoreAPPMVC.Models;
 namespace SensoreAPPMVC.Models
 {
     public class LoginViewModel
@@ -10,6 +11,6 @@ namespace SensoreAPPMVC.Models
         [Required(ErrorMessage = "Password is required.")]
         [DataType(DataType.Password)]
         [Display(Name = "Password")]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }
