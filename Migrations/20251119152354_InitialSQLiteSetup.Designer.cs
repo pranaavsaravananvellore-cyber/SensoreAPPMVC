@@ -12,8 +12,8 @@ using SensoreAPPMVC.Data;
 namespace SensoreAPPMVC.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251111205132_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251119152354_InitialSQLiteSetup")]
+    partial class InitialSQLiteSetup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace SensoreAPPMVC.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("GraphineTraceProgramRider.Models.User", b =>
+            modelBuilder.Entity("SensoreAPPMVC.Models.User", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
@@ -41,6 +41,10 @@ namespace SensoreAPPMVC.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

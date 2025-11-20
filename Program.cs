@@ -1,16 +1,26 @@
 
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Sqlite;
 using SensoreAPPMVC.Data;
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 //Add the AppDBContext and configure the connection string
 builder.Services.AddDbContext<SensoreAPPMVC.Data.AppDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
+
+using(var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+    //apply any pending migrations
+    dbContext.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -19,7 +29,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -29,8 +39,8 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Account}/{action=Login}/{id?}");
+    //.WithStaticAssets();
 
 
 app.Run();

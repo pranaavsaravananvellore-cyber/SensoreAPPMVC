@@ -22,7 +22,7 @@ namespace SensoreAPPMVC.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("GraphineTraceProgramRider.Models.User", b =>
+            modelBuilder.Entity("SensoreAPPMVC.Models.User", b =>
                 {
                     b.Property<int>("UserId")
                         .ValueGeneratedOnAdd()
@@ -38,6 +38,10 @@ namespace SensoreAPPMVC.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

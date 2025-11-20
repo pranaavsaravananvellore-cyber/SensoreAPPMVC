@@ -3,6 +3,7 @@ using SensoreAPPMVC.Models;
 using SensoreAPPMVC.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using SensoreAPPMVC.Utilities;
 
 namespace SensoreAPPMVC.Controllers
 {
@@ -37,7 +38,7 @@ namespace SensoreAPPMVC.Controllers
                 return View(model);
             }
             //plainText password check
-            if (user.Password == model.Password)
+            if (PasswordHasher.VerifyPassword(model.Password, user.HashedPassword))
             {
                 //redirecting to appropirate dashboard based on user role
                 switch(user.Role)
@@ -46,7 +47,7 @@ namespace SensoreAPPMVC.Controllers
                         return RedirectToAction("Dashboard", "Admin");
                     case "Clinition":
                         return RedirectToAction("Dashboard", "Clinition");
-                    case "patient":
+                    case "Patient":
                         return RedirectToAction("Dashboard", "Patient");
                     default:
                         ModelState.AddModelError(string.Empty, "Invalid user role.");

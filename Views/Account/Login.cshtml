@@ -5,7 +5,7 @@
 }
 <div>
   <h1>Login</h1>
-  <form asp-action="Login" method="post">
+  <form asp-action="Login" asp-controller="Account" method="post">
     <div>
       <label asp-for="Email"></label>
       <input asp-for="Email" />
