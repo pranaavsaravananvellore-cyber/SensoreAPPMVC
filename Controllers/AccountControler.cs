@@ -45,9 +45,10 @@ namespace SensoreAPPMVC.Controllers
                 HttpContext.Session.SetString("UserName", user.Name);
                 HttpContext.Session.SetString("UserRole", user.Role);
                 //redirecting to appropirate dashboard based on user role
-                switch (user.Role.ToLower())
+                switch (user.Role)
                 {
                     case "Admin":
+                        Console.WriteLine("Admin logged in");
                         return RedirectToAction("Dashboard", "Admin");
                     case "Clinition":
                         return RedirectToAction("Dashboard", "Clinition");

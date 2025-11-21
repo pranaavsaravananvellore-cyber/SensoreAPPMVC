@@ -1,4 +1,3 @@
-
 @model SensoreAPPMVC.Models.LoginViewModel
 @{
     ViewData["Title"] = "Login";
@@ -10,28 +9,59 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - SensoreAPPMVC</title>
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/login.css" />
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
-    <div class ="loginContainer">
-      <h1>Login</h1>
-      <form asp-action="Login" asp-controller="Account" method="post">
-        <div>
-          <label asp-for="Email"></label>
-          <input asp-for="Email" />
-          <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
+  <header class="mainLogo-Header">
+    <img src="~/images/loginMainLogo.png" alt="Sensore Logo" class="mainLogo-Image" />
+  </header>
 
-        <div>
-          <label asp-for="Password"></label>
-          <input asp-for="Password" type="password" />
-          <span asp-validation-for="Password" class="text-danger"></span>
-        </div>
+    <div class="wrapper">
+        <form asp-action="Login" asp-controller="Account" method="post" class="loginForm">
+            @Html.AntiForgeryToken()
+            
+            
+            
+            <h2>Welcome</h2>
 
-        <button type="submit">Login</button>
+            @if (ViewData.ModelState.ErrorCount > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="errorMessage">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
 
+            <div class="inputBox">
+                <input asp-for="Email" type="email" placeholder="Email" required>
+                <span asp-validation-for="Email" class="text-danger"></span>
+                <i class="bx bx-user"></i>
+            </div>
 
-      </form>
-    </div>  
-  </body>
+            <div class="inputBox">
+                <input asp-for="Password" type="password" placeholder="Password" required>
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <i class="bx bx-lock-alt"></i>
+            </div>
+
+            <div class="rememberForgot">
+                <a asp-action="ForgotPassword" asp-controller="Account">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn">Login</button>
+
+            <div class="registerLink">
+                <p>Don't have an account? <a asp-action="Register" asp-controller="Account">Register</a></p>
+            </div>
+        </form>
+    </div>
+
+    <div class="footerLogo">
+        <img src="~/images/footerLoginIcon.png" alt="Sensore Logo" class="footerLogo-image" />
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
 </html>
