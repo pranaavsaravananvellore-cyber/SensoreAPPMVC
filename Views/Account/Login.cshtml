@@ -2,24 +2,36 @@
 @model SensoreAPPMVC.Models.LoginViewModel
 @{
     ViewData["Title"] = "Login";
+    Layout = null;
 }
-<div>
-  <h1>Login</h1>
-  <form asp-action="Login" asp-controller="Account" method="post">
-    <div>
-      <label asp-for="Email"></label>
-      <input asp-for="Email" />
-      <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SensoreAPPMVC</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <div class ="loginContainer">
+      <h1>Login</h1>
+      <form asp-action="Login" asp-controller="Account" method="post">
+        <div>
+          <label asp-for="Email"></label>
+          <input asp-for="Email" />
+          <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
 
-    <div>
-      <label asp-for="Password"></label>
-      <input asp-for="Password" type="password" />
-      <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
+        <div>
+          <label asp-for="Password"></label>
+          <input asp-for="Password" type="password" />
+          <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
 
-    <button type="submit">Login</button>
+        <button type="submit">Login</button>
 
 
-  </form>
-</div>  
+      </form>
+    </div>  
+  </body>
+</html>

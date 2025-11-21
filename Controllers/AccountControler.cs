@@ -23,6 +23,7 @@ namespace SensoreAPPMVC.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -37,11 +38,14 @@ namespace SensoreAPPMVC.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View(model);
             }
-            //plainText password check
+            // password check
             if (PasswordHasher.VerifyPassword(model.Password, user.HashedPassword))
             {
+                HttpContext.Session.SetInt32("UserId", user.UserId);
+                HttpContext.Session.SetString("UserName", user.Name);
+                HttpContext.Session.SetString("UserRole", user.Role);
                 //redirecting to appropirate dashboard based on user role
-                switch(user.Role)
+                switch (user.Role.ToLower())
                 {
                     case "Admin":
                         return RedirectToAction("Dashboard", "Admin");
@@ -50,20 +54,24 @@ namespace SensoreAPPMVC.Controllers
                     case "Patient":
                         return RedirectToAction("Dashboard", "Patient");
                     default:
-                        ModelState.AddModelError(string.Empty, "Invalid user role.");
-                        return View(model);
-                        
+
+                        return RedirectToAction("Login", "Account");
+
                 }
             }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return View(model);
-            }
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
+        }
+        
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login", "Account");
         }
 
-        
-
-
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
     }
 }
