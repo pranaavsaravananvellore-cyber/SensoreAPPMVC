@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SensoreAPPMVC.Models;
 namespace SensoreAPPMVC.Controllers
 {
-    public class UserControler : Controller{
+    public class UserController : Controller{
 
         public IActionResult Login()
         {

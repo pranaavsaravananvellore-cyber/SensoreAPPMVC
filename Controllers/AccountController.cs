@@ -41,15 +41,17 @@ namespace SensoreAPPMVC.Controllers
             // password check
             if (PasswordHasher.VerifyPassword(model.Password, user.HashedPassword))
             {
+                Console.WriteLine("PASSWORD VERIFIED");
                 HttpContext.Session.SetInt32("UserId", user.UserId);
                 HttpContext.Session.SetString("UserName", user.Name);
                 HttpContext.Session.SetString("UserRole", user.Role);
+                Console.WriteLine($"Session Set - UserId: {user.UserId}, Name: {user.Name}, Role: {user.Role}");
                 //redirecting to appropirate dashboard based on user role
                 switch (user.Role)
                 {
                     case "Admin":
-                        Console.WriteLine("Admin logged in");
                         return RedirectToAction("Dashboard", "Admin");
+                        
                     case "Clinition":
                         return RedirectToAction("Dashboard", "Clinition");
                     case "Patient":
