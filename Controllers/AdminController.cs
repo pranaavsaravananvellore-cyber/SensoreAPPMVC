@@ -43,6 +43,19 @@ namespace SensoreAPPMVC.Controllers
             return View();
         }
 
+
+
+        [HttpGet]
+        //[Route("[Controller]/[Action]")]
+        public IActionResult Logout()
+        {
+            // Clear the session
+            HttpContext.Session.Clear();
+
+            // Redirect to the login page
+            return RedirectToAction("Login", "Account");
+        }
+
         
     }
 }
