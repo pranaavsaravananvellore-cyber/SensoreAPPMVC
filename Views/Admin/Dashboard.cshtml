@@ -1,6 +1,9 @@
+@using SensoreAPPMVC.Models;
+@model List<User>
+
 @{
     ViewData["Title"] = "Dashboard";
-    Layout = null;
+    Layout=null;
 }
 
 <!DOCTYPE html>
@@ -8,7 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>@ViewData["Title"]</title>
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         * {
@@ -71,10 +74,6 @@
             font-size: 20px;
         }
 
-        .sidebar-btn i {
-            font-size: 24px;
-        }
-
         .sidebar-btn:hover {
             color: white;
             background-color: rgba(55, 65, 81, 0.5);
@@ -83,6 +82,10 @@
         .sidebar-btn.active {
             background-color: #a855f7;
             color: white;
+        }
+
+        .sidebar-btn i {
+            font-size: 24px;
         }
 
         .sidebar-bottom {
@@ -159,141 +162,7 @@
             width: fit-content;
         }
 
-        /* Pending Onboarding */
-        .onboarding-item {
-            padding: 12px;
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .onboarding-info {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .onboarding-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        /* Patients List */
-        .patient-item {
-            padding: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .patient-item:hover {
-            background-color: #f9fafb;
-        }
-
-        .patient-name {
-            font-size: 14px;
-            color: #374151;
-        }
-
-        .patient-delete {
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            padding: 4px;
-            color: #dc2626;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .patient-item:hover .patient-delete {
-            opacity: 1;
-        }
-
-        /* Alerts */
-        .alert-item {
-            padding: 12px;
-            background-color: #f3f0ff;
-            border: 1px solid #e9d5ff;
-            border-radius: 6px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .alert-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .alert-type {
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b21a8;
-            display: block;
-        }
-
-        .alert-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .alert-time {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .alert-dismiss {
-            padding: 4px;
-            color: #6b7280;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        /* New Account Card */
-        .new-account-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 12px;
-            height: 120px;
-        }
-
-        .add-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .add-icon {
-            font-size: 32px;
-            color: #9ca3af;
-        }
-
-        .add-text {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-
-        /* Manage Accounts */
+        /* Account Item */
         .account-item {
             padding: 12px;
             background-color: #f9fafb;
@@ -333,12 +202,41 @@
             flex-shrink: 0;
         }
 
-        .edit-button {
+        .edit-button, .delete-button {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 4px;
+            padding: 6px;
             font-size: 16px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .edit-button:hover {
+            background-color: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .delete-button:hover {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .empty-state {
+            color: #9ca3af;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px 0;
         }
 
         /* Responsive */
@@ -370,7 +268,7 @@
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Faa0bfa9080874e7d84f4ab0c1d7a754c%2F461850d7a7ea41ed87f99308688cf645?format=webp&width=800" alt="Logo" class="sidebar-logo">
+            <img src="~/images/footerLoginIcon.png" alt="Logo" class="sidebar-logo">
             
             <div class="sidebar-nav">
                 <button class="sidebar-btn active" title="Data"><i class='bx bx-grid'></i></button>
@@ -379,7 +277,7 @@
             </div>
 
             <div class="sidebar-bottom">
-                <button class="sidebar-btn" title="Back"><i class='bx bx-left-arrow-alt'></i></button>
+                <a href="@Url.Action("Logout", "Account")" class="sidebar-btn" title="Logout"><i class='bx bx-left-arrow-alt'></i></a>
             </div>
         </div>
 
@@ -394,20 +292,23 @@
                         <div class="card-title">Pending onboarding</div>
                     </div>
                     <div class="card-content">
-                        <div class="onboarding-item">
-                            <div class="onboarding-info">
-                                <div class="onboarding-name">John Smith</div>
-                                <div class="badge">12 Days</div>
-                            </div>
-                            <button class="patient-delete"><i class='bx bx-trash'></i></button>
-                        </div>
-                        <div class="onboarding-item">
-                            <div class="onboarding-info">
-                                <div class="onboarding-name">Jane Doe</div>
-                                <div class="badge">5 Days</div>
-                            </div>
-                            <button class="patient-delete"><i class='bx bx-trash'></i></button>
-                        </div>
+                        @if (Model == null || Model.Count == 0)
+                        {
+                            <p class="empty-state">No pending onboarding</p>
+                        }
+                        else
+                        {
+                            @foreach (var user in Model.Where(u => u.Role == "Pending").Take(2))
+                            {
+                                <div style="padding: 12px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 500; color: #374151;">@user.Name</div>
+                                        <div style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; margin-top: 8px;">5 Days</div>
+                                    </div>
+                                    <button style="background: none; border: none; cursor: pointer; padding: 4px; color: #dc2626;" title="Remove"><i class='bx bx-trash'></i></button>
+                                </div>
+                            }
+                        }
                     </div>
                 </div>
 
@@ -415,20 +316,20 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">Unassigned Patients</div>
-                        <button style="background: none; border: none; cursor: pointer; font-size: 18px;"><i class='bx bx-plus'></i></button>
+                        <button style="background: none; border: none; cursor: pointer; font-size: 18px;" title="Add Patient"><i class='bx bx-plus'></i></button>
                     </div>
                     <div class="card-content">
-                        <div class="patient-item">
-                            <span class="patient-name">Patient One</span>
-                            <button class="patient-delete"><i class='bx bx-x'></i></button>
+                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
+                            <span style="font-size: 14px; color: #374151;">Patient One</span>
+                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
                         </div>
-                        <div class="patient-item">
-                            <span class="patient-name">Patient Two</span>
-                            <button class="patient-delete"><i class='bx bx-x'></i></button>
+                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
+                            <span style="font-size: 14px; color: #374151;">Patient Two</span>
+                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
                         </div>
-                        <div class="patient-item">
-                            <span class="patient-name">Patient Three</span>
-                            <button class="patient-delete"><i class='bx bx-x'></i></button>
+                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
+                            <span style="font-size: 14px; color: #374151;">Patient Three</span>
+                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
                         </div>
                     </div>
                 </div>
@@ -439,21 +340,21 @@
                         <div class="card-title">Alerts</div>
                     </div>
                     <div class="card-content">
-                        <div class="alert-item">
-                            <div class="alert-content">
-                                <span class="alert-type">Password reset request</span>
-                                <div class="alert-name">Yinuach</div>
-                                <div class="alert-time">Sent: 15:00 | 13/4/2025</div>
+                        <div style="padding: 12px; background-color: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 6px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                <span style="font-size: 11px; font-weight: 600; color: #6b21a8; display: block;">Password reset request</span>
+                                <div style="font-size: 14px; font-weight: 500; color: #374151;">Yinuach</div>
+                                <div style="font-size: 12px; color: #6b7280;">Sent: 15:00 | 13/4/2025</div>
                             </div>
-                            <button class="alert-dismiss"><i class='bx bx-x'></i></button>
+                            <button style="padding: 4px; color: #6b7280; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
                         </div>
-                        <div class="alert-item">
-                            <div class="alert-content">
-                                <span class="alert-type">Forgotten Email</span>
-                                <div class="alert-name">Monkey Lo Luffy</div>
-                                <div class="alert-time">Sent: 12:10 | 23/4/2025</div>
+                        <div style="padding: 12px; background-color: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 6px; display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                <span style="font-size: 11px; font-weight: 600; color: #6b21a8; display: block;">Forgotten Email</span>
+                                <div style="font-size: 14px; font-weight: 500; color: #374151;">Monkey Lo Luffy</div>
+                                <div style="font-size: 12px; color: #6b7280;">Sent: 12:10 | 23/4/2025</div>
                             </div>
-                            <button class="alert-dismiss"><i class='bx bx-x'></i></button>
+                            <button style="padding: 4px; color: #6b7280; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
                         </div>
                     </div>
                 </div>
@@ -464,11 +365,11 @@
                         <div class="card-title">New Account</div>
                     </div>
                     <div class="card-content">
-                        <div class="new-account-container">
-                            <button class="add-button">
-                                <span class="add-icon"><i class='bx bx-plus'></i></span>
-                                <span class="add-text">Add Account</span>
-                            </button>
+                        <div style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; height: 120px;">
+                            <a href="@Url.Action("Create", "Admin")" style="background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; text-decoration: none;">
+                                <span style="font-size: 32px; color: #9ca3af;"><i class='bx bx-plus'></i></span>
+                                <span style="font-size: 12px; color: #9ca3af;">Add Account</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -479,24 +380,25 @@
                         <div class="card-title">Manage accounts</div>
                     </div>
                     <div class="card-content">
-                        <div class="account-item">
-                            <div class="account-info">
-                                <div class="account-name">Admin User</div>
-                                <div class="account-email">admin@example.com</div>
-                            </div>
-                            <div class="account-actions">
-                                <button class="edit-button"><i class='bx bx-edit'></i></button>
-                            </div>
-                        </div>
-                        <div class="account-item">
-                            <div class="account-info">
-                                <div class="account-name">John Smith</div>
-                                <div class="account-email">john@example.com</div>
-                            </div>
-                            <div class="account-actions">
-                                <button class="edit-button"><i class='bx bx-edit'></i></button>
-                            </div>
-                        </div>
+                        @if (Model == null || Model.Count == 0)
+                        {
+                            <p class="empty-state">No accounts to manage</p>
+                        }
+                        else
+                        {
+                            @foreach (var user in Model)
+                            {
+                                <div class="account-item">
+                                    <div class="account-info">
+                                        <div class="account-name">@user.Name</div>
+                                        <div class="account-email">@user.Email</div>
+                                    </div>
+                                    <div class="account-actions">
+                                        <a href="@Url.Action("Edit", "Admin", new { id = user.UserId })" class="edit-button" title="Edit"><i class='bx bx-edit'></i></a>
+                                    </div>
+                                </div>
+                            }
+                        }
                     </div>
                 </div>
             </div>
