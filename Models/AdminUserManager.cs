@@ -17,27 +17,52 @@ namespace SensoreAPPMVC.Models
             return _context.Users.Max(u => u.UserId) + 1;
         }
 
-        public User CreateUser(string Email, string password, string role, string name, DateOnly dob)
+        public User CreateUser(string Email, string password, string role, string name, DateOnly dob, int clinitionId = 0)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name is required", nameof(name));
+            if (string.IsNullOrWhiteSpace(Email))
+                throw new ArgumentException("Email is required", nameof(Email));
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Password is required", nameof(password));
+            if (string.IsNullOrWhiteSpace(role))
+                role = "patient";
 
-            var exsistingUser = _context.Users.SingleOrDefault(u => u.Email == Email);
-            if (exsistingUser != null)
+            var existing = _context.Users.SingleOrDefault(u => u.Email == Email);
+            if (existing != null)
+                throw new InvalidOperationException("A user with this email already exists.");
+
+            var hashed = PasswordHasher.HashPassword(password);
+
+            User user;
+
+            if (role.Equals("patient", StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception("User with this email already exsists.");
+                user = new Patient
+                {
+                    Name = name,
+                    Email = Email,
+                    HashedPassword = hashed,
+                    Role = "Patient", // note capitalisation – match PatientController check
+                    DOB = dob,
+                    ClinitionId = clinitionId,
+                    CompletedRegistration = clinitionId != 0
+                };
             }
-            var user = new User
+            else
             {
-                Email = Email,
-                HashedPassword = PasswordHasher.HashPassword(password),
-                Role = role,
-                UserId = FindNewAccountId(),
-                Name = name,
-                DOB = dob
-            };
+                user = new User
+                {
+                    Name = name,
+                    Email = Email,
+                    HashedPassword = hashed,
+                    Role = role,
+                    DOB = dob
+                };
+            }
 
-            _context.Users.Add(user);
+            _context.Users.Add(user);    // one table, TPH handles Patient/User
             _context.SaveChanges();
-
             return user;
         }
     }

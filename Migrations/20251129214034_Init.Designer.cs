@@ -11,8 +11,8 @@ using SensoreAPPMVC.Data;
 namespace SensoreAPPMVC.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251120234916_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251129214034_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,9 +45,33 @@ namespace SensoreAPPMVC.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("User");
+
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+
+                    b.HasDiscriminator<string>("UserType").HasValue("User");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("SensoreAPPMVC.Models.Patient", b =>
+                {
+                    b.HasBaseType("SensoreAPPMVC.Models.User");
+
+                    b.Property<int>("ClinitionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CompletedRegistration")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("Patient");
                 });
 #pragma warning restore 612, 618
         }

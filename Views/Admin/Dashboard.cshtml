@@ -292,20 +292,27 @@
                         <div class="card-title">Pending onboarding</div>
                     </div>
                     <div class="card-content">
-                        @if (Model == null || Model.Count == 0)
+                        @if (Model == null || !Model.Any(u => u is Patient))
                         {
                             <p class="empty-state">No pending onboarding</p>
                         }
                         else
                         {
-                            @foreach (var user in Model.Where(u => u.Role == "Pending").Take(2))
+                            @foreach (var patient in Model
+                                .OfType<Patient>()
+                                .Where(p => !p.CompletedRegistration)
+                                .Take(2))
                             {
                                 <div style="padding: 12px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <div>
-                                        <div style="font-size: 14px; font-weight: 500; color: #374151;">@user.Name</div>
-                                        <div style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; margin-top: 8px;">5 Days</div>
+                                        <div style="font-size: 14px; font-weight: 500; color: #374151;">@patient.Name</div>
+                                        <div style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; margin-top: 8px;">
+                                            @patient.Email
+                                        </div>
                                     </div>
-                                    <button style="background: none; border: none; cursor: pointer; padding: 4px; color: #dc2626;" title="Remove"><i class='bx bx-trash'></i></button>
+                                    <button style="background: none; border: none; cursor: pointer; padding: 4px; color: #dc2626;" title="Remove">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
                                 </div>
                             }
                         }

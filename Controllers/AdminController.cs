@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using SensoreAPPMVC.Data;
+using SensoreAPPMVC.Models;
+using SensoreAPPMVC.Utilities;
 
 namespace SensoreAPPMVC.Controllers
 {
-    
     public class AdminController : Controller
     {
         private readonly AppDBContext _context;
+
         public AdminController(AppDBContext context)
         {
             _context = context;
@@ -15,47 +17,51 @@ namespace SensoreAPPMVC.Controllers
         [Route("[controller]/[action]")]
         public IActionResult Dashboard()
         {
-
-            //validating admin access
             var userId = HttpContext.Session.GetInt32("UserId");
             var userRole = HttpContext.Session.GetString("UserRole");
-            Console.WriteLine($"Session UserId: {userId}");
-            Console.WriteLine($"Session UserRole: {userRole}");
-
-
 
             if (userId == null || userRole != "Admin")
-            {
-
                 return RedirectToAction("Login", "Account");
-            }
 
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
 
-            // Fetch necessary data for the admin dashboard
-            var userName = HttpContext.Session.GetString("UserName");
-            ViewBag.UserName = userName;
-
-            // Get admin dashboard data
-
-
-            //send view 
-
-            return View();
+            // For now load all users – you can refine later
+            var users = _context.Users.ToList();
+            return View(users);
         }
-
-
 
         [HttpGet]
-        //[Route("[Controller]/[Action]")]
-        public IActionResult Logout()
+        public IActionResult Create()
         {
-            // Clear the session
-            HttpContext.Session.Clear();
-
-            // Redirect to the login page
-            return RedirectToAction("Login", "Account");
+            return View("CreateAccount", new AdminCreateUserViewModel());
         }
 
-        
+        [HttpPost]
+        public IActionResult Create(AdminCreateUserViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View("CreateAccount", model);
+
+            var manager = new AdminUserManager(_context);
+
+            // Create either User or Patient (handled in manager)
+            manager.CreateUser(
+                Email: model.Email,
+                password: model.Password,
+                role: model.Role,
+                name: model.Name,
+                dob: model.DOB,
+                clinitionId: model.ClinitionId
+            );
+
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login", "Account");
+        }
     }
 }

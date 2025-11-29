@@ -42,9 +42,33 @@ namespace SensoreAPPMVC.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("User");
+
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+
+                    b.HasDiscriminator<string>("UserType").HasValue("User");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("SensoreAPPMVC.Models.Patient", b =>
+                {
+                    b.HasBaseType("SensoreAPPMVC.Models.User");
+
+                    b.Property<int>("ClinitionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("CompletedRegistration")
+                        .HasColumnType("INTEGER");
+
+                    b.HasDiscriminator().HasValue("Patient");
                 });
 #pragma warning restore 612, 618
         }

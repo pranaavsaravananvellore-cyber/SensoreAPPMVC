@@ -1,0 +1,761 @@
+@using SensoreAPPMVC.Models;
+@model AdminCreateUserViewModel
+
+@{
+    ViewData["Title"] = "Create Account";
+    Layout=null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 80px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 0;
+            gap: 32px;
+            position: sticky;
+            left: 0;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: invert(1);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .sidebar-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #9ca3af;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .sidebar-btn:hover {
+            color: white;
+            background-color: rgba(55, 65, 81, 0.5);
+        }
+
+        .sidebar-btn.active {
+            background-color: #a855f7;
+            color: white;
+        }
+
+        .sidebar-btn i {
+            font-size: 24px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            max-width: 800px;
+        }
+
+        /* Header Section */
+        .header-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            color: #6b7280;
+            transition: all 0.2s ease;
+            padding: 8px;
+        }
+
+        .back-button:hover {
+            color: #1f2937;
+        }
+
+        .header-title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 16px;
+        }
+
+        .manage-btn {
+            padding: 8px 16px;
+            border: 2px solid #a855f7;
+            background: white;
+            color: #a855f7;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .manage-btn:hover {
+            background-color: #f3e8ff;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background-color: white;
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            background-color: white;
+            border-color: #a855f7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+        }
+
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Submit Button */
+        .submit-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #9ca3af;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #6b7280;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 420px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @@keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 4px;
+        }
+
+        .modal-close:hover {
+            color: #1f2937;
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: white;
+            border-color: #a855f7;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .radio-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .radio-item input[type="radio"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #a855f7;
+        }
+
+        .radio-label {
+            font-size: 14px;
+            color: #1f2937;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            padding-top: 12px;
+        }
+
+        .clear-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background-color: #fbbf24;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-button:hover {
+            background-color: #f59e0b;
+        }
+
+        .submit-clinician-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background-color: #16a34a;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-clinician-button:hover:not(:disabled) {
+            background-color: #15803d;
+        }
+
+        .submit-clinician-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .validation-error {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .header-title {
+                font-size: 24px;
+            }
+
+            .form-card {
+                padding: 16px;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="~/images/footerLoginIcon.png" alt="Logo" class="sidebar-logo">
+            
+            <div class="sidebar-nav">
+                <a href="@Url.Action("Dashboard", "Admin")" class="sidebar-btn" title="Dashboard"><i class='bx bx-grid'></i></a>
+                <button class="sidebar-btn" title="Feedback"><i class='bx bx-comment'></i></button>
+                <button class="sidebar-btn" title="Layout"><i class='bx bx-layout'></i></button>
+            </div>
+
+            <div class="sidebar-bottom">
+                <a href="@Url.Action("Login", "Account")" class="sidebar-btn" title="Back"><i class='bx bx-left-arrow-alt'></i></a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="header-left">
+                    <button class="back-button" onclick="history.back()" title="Back"><i class='bx bx-left-arrow-alt'></i></button>
+                    <h1 class="header-title">Add Account</h1>
+                </div>
+                <div class="header-right">
+                    <button class="manage-btn" onclick="alert('Manage account functionality')">Manage account</button>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="form-card">
+                <form id="createAccountForm" method="post" action="@Url.Action("Create", "Admin")">
+                    <!-- Name Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="name">Name</label>
+                        <input class="form-input" type="text" id="name" name="Name" placeholder="Value" required>
+                        @if (ViewData.ModelState["Name"]?.Errors.Count > 0)
+                        {
+                            <div class="validation-error">@ViewData.ModelState["Name"].Errors[0].ErrorMessage</div>
+                        }
+                    </div>
+
+                    <!-- Surname Field (Not in original model but in wireframe) -->
+                    <div class="form-group">
+                        <label class="form-label" for="surname">Surname</label>
+                        <input class="form-input" type="text" id="surname" name="Surname" placeholder="Value">
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input class="form-input" type="password" id="password" name="Password" placeholder="Value" required>
+                        @if (ViewData.ModelState["Password"]?.Errors.Count > 0)
+                        {
+                            <div class="validation-error">@ViewData.ModelState["Password"].Errors[0].ErrorMessage</div>
+                        }
+                    </div>
+
+                    <!-- Retype Password Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="retypePassword">Retype Password</label>
+                        <input class="form-input" type="password" id="retypePassword" name="RetypePassword" placeholder="Value" required>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input class="form-input" type="email" id="email" name="Email" placeholder="Value" required>
+                        @if (ViewData.ModelState["Email"]?.Errors.Count > 0)
+                        {
+                            <div class="validation-error">@ViewData.ModelState["Email"].Errors[0].ErrorMessage</div>
+                        }
+                    </div>
+
+                    <!-- Account Type Dropdown -->
+                    <div class="form-group">
+                        <label class="form-label" for="accountType">Account Type</label>
+                        <select class="form-select" id="accountType" name="Role" required>
+                            <option value="">Select account type</option>
+                            <option value="patient">patient</option>
+                            <option value="clinician">clinician</option>
+                            <option value="admin">admin</option>
+                        </select>
+                        @if (ViewData.ModelState["Role"]?.Errors.Count > 0)
+                        {
+                            <div class="validation-error">@ViewData.ModelState["Role"].Errors[0].ErrorMessage</div>
+                        }
+                    </div>
+
+                    <!-- Date of Birth Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="dob">Date of Birth</label>
+                        <input class="form-input" type="date" id="dob" name="DOB" required>
+                        @if (ViewData.ModelState["DOB"]?.Errors.Count > 0)
+                        {
+                            <div class="validation-error">@ViewData.ModelState["DOB"].Errors[0].ErrorMessage</div>
+                        }
+                    </div>
+
+                    <!-- Pre-assign Clinician Toggle -->
+                    <div class="form-group">
+                        <div class="toggle-group">
+                            <label class="toggle-label">Pre-assign clinician</label>
+                            <label class="switch">
+                                <input type="checkbox" id="preAssignToggle" onchange="handleToggleChange(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-button">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Clinician Modal -->
+    <div id="clinicianModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <i class='bx bx-left-arrow-alt' style="font-size: 18px; color: #6b7280;"></i>
+                    <h2 class="modal-title">Search clinician</h2>
+                </div>
+                <button class="modal-close" onclick="closeClinicianModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Search Input -->
+                <input 
+                    type="text" 
+                    id="clinicianSearch" 
+                    class="search-input" 
+                    placeholder="Search clinician..."
+                    onkeyup="filterClinicians()"
+                >
+
+                <!-- Radio Group -->
+                <div class="radio-group" id="clinicianList">
+                    <label class="radio-item">
+                        <input type="radio" name="selectedClinician" value="1">
+                        <span class="radio-label">Mr Clinician</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="selectedClinician" value="2">
+                        <span class="radio-label">Mr Clinician</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="selectedClinician" value="3">
+                        <span class="radio-label">Mr Clinician</span>
+                    </label>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="modal-actions">
+                    <button type="button" class="clear-button" onclick="clearClinicianFields()">Clear fields</button>
+                    <button type="button" class="submit-clinician-button" id="submitClinicianBtn" onclick="submitWithClinician()" disabled>Submit with Assigned clinician</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleToggleChange(element) {
+            if (element.checked) {
+                openClinicianModal();
+            }
+        }
+
+        function openClinicianModal() {
+            document.getElementById('clinicianModal').classList.add('show');
+        }
+
+        function closeClinicianModal() {
+            document.getElementById('clinicianModal').classList.remove('show');
+            document.getElementById('preAssignToggle').checked = false;
+        }
+
+        function filterClinicians() {
+            const searchInput = document.getElementById('clinicianSearch').value.toLowerCase();
+            const radioItems = document.querySelectorAll('.radio-item');
+            
+            radioItems.forEach(item => {
+                const label = item.querySelector('.radio-label').textContent.toLowerCase();
+                if (label.includes(searchInput)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function clearClinicianFields() {
+            document.getElementById('clinicianSearch').value = '';
+            document.querySelectorAll('input[name="selectedClinician"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.getElementById('submitClinicianBtn').disabled = true;
+            filterClinicians();
+        }
+
+        function submitWithClinician() {
+            const selectedRadio = document.querySelector('input[name="selectedClinician"]:checked');
+            if (selectedRadio) {
+                const clinicianId = selectedRadio.value;
+                console.log('Submitted with clinician ID:', clinicianId);
+                closeClinicianModal();
+                // Optionally add hidden input to form and submit
+                alert('Account submitted with assigned clinician');
+            }
+        }
+
+        // Enable/disable submit button based on selection
+        document.querySelectorAll('input[name="selectedClinician"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('submitClinicianBtn').disabled = !this.checked;
+            });
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('clinicianModal');
+            if (event.target === modal) {
+                closeClinicianModal();
+            }
+        }
+
+        // Form submission validation
+        document.getElementById('createAccountForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const retypePassword = document.getElementById('retypePassword').value;
+            
+            if (password !== retypePassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

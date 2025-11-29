@@ -21,5 +21,6 @@ namespace SensoreAPPMVC.Models
         [Required(ErrorMessage = "Date of Birth is required.")]
         [DataType(DataType.Date)]
         public DateOnly DOB { get; set; }
+        public int ClinitionId { get; set; }
     }
 }
