@@ -326,18 +326,28 @@
                         <button style="background: none; border: none; cursor: pointer; font-size: 18px;" title="Add Patient"><i class='bx bx-plus'></i></button>
                     </div>
                     <div class="card-content">
-                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
-                            <span style="font-size: 14px; color: #374151;">Patient One</span>
-                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
-                        </div>
-                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
-                            <span style="font-size: 14px; color: #374151;">Patient Two</span>
-                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
-                        </div>
-                        <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; transition: all 0.2s ease;">
-                            <span style="font-size: 14px; color: #374151;">Patient Three</span>
-                            <button style="opacity: 0; transition: opacity 0.2s ease; padding: 4px; color: #dc2626; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
-                        </div>
+                        @* Show the SAME list as Pending onboarding *@
+                        @if (Model == null || !Model.Any(u => u is Patient && !(u as Patient)!.CompletedRegistration))
+                        {
+                            <p class="empty-state">No unassigned patients</p>
+                        }
+                        else
+                        {
+                            @foreach (var patient in Model
+                                .OfType<Patient>()
+                                .Where(p => !p.CompletedRegistration))
+                            {
+                                <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; border: 1px solid #e5e7eb; margin-bottom: 6px;">
+                                    <span style="font-size: 14px; color: #374151;">@patient.Name (@patient.Email)</span>
+                                    
+                                    <a href="@Url.Action("Edit", "Admin", new { id = patient.UserId })"
+                                       style="padding: 4px; color: black; background: none; border: none; cursor: pointer; font-size: 16px; text-decoration:none;"
+                                       title="Edit">
+                                        <i class='bx bx-edit'></i>
+                                    </a>
+                                </div>
+                            }
+                        }
                     </div>
                 </div>
 
