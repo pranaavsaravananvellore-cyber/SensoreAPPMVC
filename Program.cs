@@ -1,8 +1,8 @@
-
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
 using SensoreAPPMVC.Data;
+using SensoreAPPMVC.Models;
+using SensoreAPPMVC.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -16,9 +16,10 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 //Add the AppDBContext and configure the connection string
-builder.Services.AddDbContext<SensoreAPPMVC.Data.AppDBContext>(options =>
+builder.Services.AddDbContext<AppDBContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<AdminServices>();
 var app = builder.Build();
 
 using(var scope = app.Services.CreateScope())

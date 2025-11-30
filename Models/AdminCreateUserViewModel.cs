@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SensoreAPPMVC.Models;
 namespace SensoreAPPMVC.Models
 {
@@ -21,6 +22,8 @@ namespace SensoreAPPMVC.Models
         [Required(ErrorMessage = "Date of Birth is required.")]
         [DataType(DataType.Date)]
         public DateOnly DOB { get; set; }
-        public int ClinitionId { get; set; }
+        public int? ClinitionId { get; set; }
+
+        public List<SelectListItem> ClinitionList { get; set; } = new List<SelectListItem>();
     }
 }

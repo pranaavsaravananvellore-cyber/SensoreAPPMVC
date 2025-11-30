@@ -31,7 +31,6 @@
             height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 80px;
             background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
@@ -95,7 +94,6 @@
             gap: 16px;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             overflow-y: auto;
@@ -103,7 +101,6 @@
             max-width: 800px;
         }
 
-        /* Header Section */
         .header-section {
             display: flex;
             align-items: center;
@@ -158,7 +155,6 @@
             background-color: #f3e8ff;
         }
 
-        /* Form Card */
         .form-card {
             background: white;
             border-radius: 8px;
@@ -220,7 +216,6 @@
             box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
         }
 
-        /* Toggle Switch */
         .toggle-group {
             display: flex;
             align-items: center;
@@ -279,7 +274,6 @@
             transform: translateX(20px);
         }
 
-        /* Submit Button */
         .submit-button {
             width: 100%;
             padding: 12px;
@@ -297,7 +291,6 @@
             background-color: #6b7280;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -317,12 +310,8 @@
         }
 
         @@keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
@@ -492,33 +481,17 @@
             margin-top: 4px;
         }
 
-        /* Responsive */
         @@media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-            }
-
-            .main-content {
-                padding: 16px;
-            }
-
-            .header-title {
-                font-size: 24px;
-            }
-
-            .form-card {
-                padding: 16px;
-            }
-
-            .modal-content {
-                width: 95%;
-            }
+            .sidebar { width: 60px; }
+            .main-content { padding: 16px; }
+            .header-title { font-size: 24px; }
+            .form-card { padding: 16px; }
+            .modal-content { width: 95%; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <img src="~/images/footerLoginIcon.png" alt="Logo" class="sidebar-logo">
             
@@ -533,9 +506,7 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Header -->
             <div class="header-section">
                 <div class="header-left">
                     <button class="back-button" onclick="history.back()" title="Back"><i class='bx bx-left-arrow-alt'></i></button>
@@ -546,26 +517,17 @@
                 </div>
             </div>
 
-            <!-- Form -->
             <div class="form-card">
                 <form id="createAccountForm" method="post" action="@Url.Action("Create", "Admin")">
-                    <!-- Name Field -->
                     <div class="form-group">
                         <label class="form-label" for="name">Name</label>
-                        <input class="form-input" type="text" id="name" name="Name" placeholder="Value" required>
+                        <input class="form-input" type="text" id="name" name="Name" placeholder="Value" value="@Model.Name" required>
                         @if (ViewData.ModelState["Name"]?.Errors.Count > 0)
                         {
                             <div class="validation-error">@ViewData.ModelState["Name"].Errors[0].ErrorMessage</div>
                         }
                     </div>
 
-                    <!-- Surname Field (Not in original model but in wireframe) -->
-                    <div class="form-group">
-                        <label class="form-label" for="surname">Surname</label>
-                        <input class="form-input" type="text" id="surname" name="Surname" placeholder="Value">
-                    </div>
-
-                    <!-- Password Field -->
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
                         <input class="form-input" type="password" id="password" name="Password" placeholder="Value" required>
@@ -575,49 +537,46 @@
                         }
                     </div>
 
-                    <!-- Retype Password Field -->
                     <div class="form-group">
                         <label class="form-label" for="retypePassword">Retype Password</label>
                         <input class="form-input" type="password" id="retypePassword" name="RetypePassword" placeholder="Value" required>
                     </div>
 
-                    <!-- Email Field -->
                     <div class="form-group">
                         <label class="form-label" for="email">Email</label>
-                        <input class="form-input" type="email" id="email" name="Email" placeholder="Value" required>
+                        <input class="form-input" type="email" id="email" name="Email" placeholder="Value" value="@Model.Email" required>
                         @if (ViewData.ModelState["Email"]?.Errors.Count > 0)
                         {
                             <div class="validation-error">@ViewData.ModelState["Email"].Errors[0].ErrorMessage</div>
                         }
                     </div>
 
-                    <!-- Account Type Dropdown -->
                     <div class="form-group">
                         <label class="form-label" for="accountType">Account Type</label>
-                        <select class="form-select" id="accountType" name="Role" required>
+                        <select class="form-select" id="accountType" name="Role" required onchange="handleRoleChange()">
                             <option value="">Select account type</option>
-                            <option value="patient">patient</option>
-                            <option value="clinician">clinician</option>
-                            <option value="admin">admin</option>
+                            <option value="Patient" @@(Model.Role == "Patient" ? "selected" : "")>Patient</option>
+                            <option value="Clinician" @@(Model.Role == "Clinician" ? "selected" : "")>Clinician</option>
+                            <option value="Admin" @@(Model.Role == "Admin" ? "selected" : "")>Admin</option>
                         </select>
+                         ~~~ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/ ~ ~~
+                        ~
                         @if (ViewData.ModelState["Role"]?.Errors.Count > 0)
                         {
-                            <div class="validation-error">@ViewData.ModelState["Role"].Errors[0].ErrorMessage</div>
+                            <div class="validation-error">@@ViewData.ModelState["Role"].Errors[0].ErrorMessage</div>
                         }
                     </div>
 
-                    <!-- Date of Birth Field -->
                     <div class="form-group">
                         <label class="form-label" for="dob">Date of Birth</label>
-                        <input class="form-input" type="date" id="dob" name="DOB" required>
+                        <input class="form-input" type="date" id="dob" name="DOB" value="@Model.DOB.ToString("yyyy-MM-dd")" required>
                         @if (ViewData.ModelState["DOB"]?.Errors.Count > 0)
                         {
-                            <div class="validation-error">@ViewData.ModelState["DOB"].Errors[0].ErrorMessage</div>
+                            <div class="validation-error">@@ViewData.ModelState["DOB"].Errors[0].ErrorMessage</div>
                         }
                     </div>
 
-                    <!-- Pre-assign Clinician Toggle -->
-                    <div class="form-group">
+                    <div class="form-group" id="clinicianToggleGroup">
                         <div class="toggle-group">
                             <label class="toggle-label">Pre-assign clinician</label>
                             <label class="switch">
@@ -627,14 +586,15 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
+                    <!-- Hidden field to store selected clinician ID -->
+                    <input type="hidden" id="clinitionId" name="ClinitionId" value="@Model.ClinitionId">
+
                     <button type="submit" class="submit-button">Submit</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Search Clinician Modal -->
     <div id="clinicianModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -646,7 +606,6 @@
             </div>
             
             <div class="modal-body">
-                <!-- Search Input -->
                 <input 
                     type="text" 
                     id="clinicianSearch" 
@@ -655,23 +614,23 @@
                     onkeyup="filterClinicians()"
                 >
 
-                <!-- Radio Group -->
                 <div class="radio-group" id="clinicianList">
-                    <label class="radio-item">
-                        <input type="radio" name="selectedClinician" value="1">
-                        <span class="radio-label">Mr Clinician</span>
-                    </label>
-                    <label class="radio-item">
-                        <input type="radio" name="selectedClinician" value="2">
-                        <span class="radio-label">Mr Clinician</span>
-                    </label>
-                    <label class="radio-item">
-                        <input type="radio" name="selectedClinician" value="3">
-                        <span class="radio-label">Mr Clinician</span>
-                    </label>
+                    @if (Model.ClinitionList != null && Model.ClinitionList.Any())
+                    {
+                        @foreach (var clinician in Model.ClinitionList)
+                        {
+                            <label class="radio-item">
+                                <input type="radio" name="selectedClinician" value="@clinician.Value">
+                                <span class="radio-label">@clinician.Text</span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <p style="text-align: center; color: #9ca3af; font-size: 14px;">No clinicians available</p>
+                    }
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="modal-actions">
                     <button type="button" class="clear-button" onclick="clearClinicianFields()">Clear fields</button>
                     <button type="button" class="submit-clinician-button" id="submitClinicianBtn" onclick="submitWithClinician()" disabled>Submit with Assigned clinician</button>
@@ -681,9 +640,24 @@
     </div>
 
     <script>
+        function handleRoleChange() {
+            const role = document.getElementById('accountType').value;
+            const toggleGroup = document.getElementById('clinicianToggleGroup');
+            
+            if (role === 'Patient') {
+                toggleGroup.style.display = 'block';
+            } else {
+                toggleGroup.style.display = 'none';
+                document.getElementById('preAssignToggle').checked = false;
+                document.getElementById('clinitionId').value = '';
+            }
+        }
+
         function handleToggleChange(element) {
             if (element.checked) {
                 openClinicianModal();
+            } else {
+                document.getElementById('clinitionId').value = '';
             }
         }
 
@@ -693,7 +667,8 @@
 
         function closeClinicianModal() {
             document.getElementById('clinicianModal').classList.remove('show');
-            document.getElementById('preAssignToggle').checked = false;
+            const hasSelection = document.getElementById('clinitionId').value !== '';
+            document.getElementById('preAssignToggle').checked = hasSelection;
         }
 
         function filterClinicians() {
@@ -716,6 +691,7 @@
                 radio.checked = false;
             });
             document.getElementById('submitClinicianBtn').disabled = true;
+            document.getElementById('clinitionId').value = '';
             filterClinicians();
         }
 
@@ -723,21 +699,22 @@
             const selectedRadio = document.querySelector('input[name="selectedClinician"]:checked');
             if (selectedRadio) {
                 const clinicianId = selectedRadio.value;
-                console.log('Submitted with clinician ID:', clinicianId);
+                const clinicianName = selectedRadio.nextElementSibling.textContent;
+                
+                document.getElementById('clinitionId').value = clinicianId;
+                console.log('Selected clinician ID:', clinicianId);
+                
                 closeClinicianModal();
-                // Optionally add hidden input to form and submit
-                alert('Account submitted with assigned clinician');
+                alert('Clinician "' + clinicianName + '" has been assigned');
             }
         }
 
-        // Enable/disable submit button based on selection
         document.querySelectorAll('input[name="selectedClinician"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 document.getElementById('submitClinicianBtn').disabled = !this.checked;
             });
         });
 
-        // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('clinicianModal');
             if (event.target === modal) {
@@ -745,7 +722,6 @@
             }
         }
 
-        // Form submission validation
         document.getElementById('createAccountForm').addEventListener('submit', function(e) {
             const password = document.getElementById('password').value;
             const retypePassword = document.getElementById('retypePassword').value;
@@ -755,6 +731,10 @@
                 alert('Passwords do not match!');
                 return false;
             }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            handleRoleChange();
         });
     </script>
 </body>

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace SensoreAPPMVC.Models
 {
@@ -18,9 +19,11 @@ namespace SensoreAPPMVC.Models
         [Required]
         public DateOnly DOB { get; set; }
 
-        // Patient-specific
         public bool IsPatient { get; set; }
         public bool CompletedRegistration { get; set; }
+
         public int? ClinitionId { get; set; }
+
+        public List<SelectListItem> ClinitionList { get; set; } = new();
     }
 }

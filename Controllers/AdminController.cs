@@ -1,25 +1,21 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SensoreAPPMVC.Data;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SensoreAPPMVC.Models;
-using SensoreAPPMVC.Utilities;
+using SensoreAPPMVC.Services;
 
 namespace SensoreAPPMVC.Controllers
 {
     public class AdminController : Controller
     {
-        private readonly AppDBContext _context;
+        private readonly AdminServices _adminServices;
 
-        public AdminController(AppDBContext context)
+        public AdminController(AdminServices adminServices)
         {
-            _context = context;
+            _adminServices = adminServices;
         }
 
         [Route("[controller]/[action]")]
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             var userRole = HttpContext.Session.GetString("UserRole");
@@ -29,39 +25,76 @@ namespace SensoreAPPMVC.Controllers
 
             ViewBag.UserName = HttpContext.Session.GetString("UserName");
 
-            // For now load all users – you can refine later
-            var users = _context.Users.ToList();
+            // Use service instead of _context
+            var users = await _adminServices.GetAllUsersAsync();
             return View(users);
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View("CreateAccount", new AdminCreateUserViewModel());
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var userRole = HttpContext.Session.GetString("UserRole");
+            if (userId == null || userRole != "Admin")
+                return RedirectToAction("Login", "Account");
+
+            var model = new AdminCreateUserViewModel();
+
+            // Load clinicians for dropdown
+            var clinicians = await _adminServices.GetAllCliniciansAsync();
+            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            {
+                Value = c.UserId.ToString(),  // This is the ID (what gets sent to server)
+                Text = c.Name                  // This is what the user sees
+            }).ToList();
+
+            return View("CreateAccount", model);
         }
 
         [HttpPost]
-        public IActionResult Create(AdminCreateUserViewModel model)
+    public async Task<IActionResult> Create(AdminCreateUserViewModel model)
+    {
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
-                return View("CreateAccount", model);
-
-            var manager = new AdminUserManager(_context);
-
-            // Create either User or Patient (handled in manager)
-            manager.CreateUser(
-                Email: model.Email,
-                password: model.Password,
-                role: model.Role,
-                name: model.Name,
-                dob: model.DOB,
-                clinitionId: model.ClinitionId
-            );
-
-            // After creating the user, redirect to the dashboard (or adjust as needed)
-            return RedirectToAction("Dashboard");
+            // Reload clinicians if validation fails
+            var clinicians = await _adminServices.GetAllCliniciansAsync();
+            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            {
+                Value = c.UserId.ToString(),
+                Text = c.Name
+            }).ToList();
+            
+            return View("CreateAccount", model);
         }
-        
+
+        var success = await _adminServices.CreateUserAsync(
+            model.Name,
+            model.Email,
+            model.Password,
+            model.Role,
+            model.DOB,
+            model.ClinitionId
+        );
+
+        if (!success)
+        {
+            ModelState.AddModelError("Email", "Email already exists!");
+            
+            // Reload clinicians
+            var clinicians = await _adminServices.GetAllCliniciansAsync();
+            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            {
+                Value = c.UserId.ToString(),
+                Text = c.Name
+            }).ToList();
+            
+            return View("CreateAccount", model);
+        }
+
+        TempData["Success"] = "User created successfully!";
+        return RedirectToAction("Dashboard");
+    }
+
         [HttpGet]
         public IActionResult Logout()
         {
@@ -73,11 +106,17 @@ namespace SensoreAPPMVC.Controllers
         [Route("Admin/Edit/{id:int}")]
         public async Task<IActionResult> Edit(int id)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == id);
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var userRole = HttpContext.Session.GetString("UserRole");
+            if (userId == null || userRole != "Admin")
+                return RedirectToAction("Login", "Account");
 
+            var user = await _adminServices.GetUserByIdAsync(id);
             if (user == null)
-                return NotFound();
+            {
+                TempData["Error"] = "User not found";
+                return RedirectToAction("Dashboard");
+            }
 
             var patient = user as Patient;
 
@@ -89,38 +128,80 @@ namespace SensoreAPPMVC.Controllers
                 Role = user.Role,
                 DOB = user.DOB,
                 IsPatient = patient != null,
-                CompletedRegistration = patient != null && patient.CompletedRegistration,
-                ClinitionId = patient != null ? patient.ClinitionId : 0
+                CompletedRegistration = patient?.CompletedRegistration ?? false,
+                ClinitionId = patient?.ClinitionId ?? 0
             };
+
+            // Load clinicians for dropdown
+            var clinicians = await _adminServices.GetAllCliniciansAsync();
+            vm.ClinitionList = clinicians.Select(c => new SelectListItem
+            {
+                Value = c.UserId.ToString(),
+                Text = c.Name
+            }).ToList();
 
             return View(vm);
         }
+
         [HttpPost]
         public async Task<IActionResult> Edit(AdminEditUserViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == model.UserId);
-            if (user == null)
-                return NotFound();
-
-            user.Name = model.Name;
-            user.Email = model.Email;
-            user.Role = model.Role;
-            user.DOB = model.DOB;
-
-            if (user is Patient patient)
             {
-                // Make sure we always give EF a non‑nullable int
-                patient.CompletedRegistration = model.CompletedRegistration;
-                patient.ClinitionId = (int)(model.ClinitionId);   // explicit cast
+                // Reload clinicians if validation fails
+                var clinicians = await _adminServices.GetAllCliniciansAsync();
+                model.ClinitionList = clinicians.Select(c => new SelectListItem
+                {
+                    Value = c.UserId.ToString(),
+                    Text = c.Name
+                }).ToList();
+                
+                return View(model);
             }
 
-            await _context.SaveChangesAsync();
+            var success = await _adminServices.UpdateUserAsync(
+                model.UserId,
+                model.Name,
+                model.Email,
+                model.Role,
+                model.DOB,
+                completedRegistration: null,    // no manual slider
+                clinitionId: model.ClinitionId  // clinician drives completion
+            );
 
+            if (!success)
+            {
+                ModelState.AddModelError("", "Update failed. Email may already be in use.");
+                
+                var clinicians = await _adminServices.GetAllCliniciansAsync();
+                model.ClinitionList = clinicians.Select(c => new SelectListItem
+                {
+                    Value = c.UserId.ToString(),
+                    Text = c.Name
+                }).ToList();
+                
+                return View(model);
+            }
+
+            TempData["Success"] = "User updated successfully!";
             return RedirectToAction("Dashboard");
         }
+
+            [HttpPost]
+            public async Task<IActionResult> Delete(int id)
+            {
+                var success = await _adminServices.DeleteUserAsync(id);
+
+                if (success)
+                {
+                    TempData["Success"] = "User deleted successfully!";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to delete user";
+                }
+
+                return RedirectToAction("Dashboard");
+            }
     }
 }
