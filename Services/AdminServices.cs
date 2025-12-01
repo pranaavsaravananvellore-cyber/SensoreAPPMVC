@@ -40,20 +40,35 @@ namespace SensoreAPPMVC.Services
             if (exists)
                 return false;
 
+            var hashedPassword = PasswordHasher.HashPassword(password);
+
             User user;
 
-            if (role == "Patient" && clinitionId.HasValue)
+            if (role == "Patient")
             {
-                user = new Patient
+                var patient = new Patient
                 {
                     Name = name,
                     Email = email,
-                    HashedPassword = PasswordHasher.HashPassword(password), // TODO: Hash this properly!
+                    HashedPassword = hashedPassword,
                     Role = role,
-                    DOB = dob,
-                    ClinitionId = clinitionId.Value,
-                    CompletedRegistration = false
+                    DOB = dob
                 };
+
+                if (clinitionId.HasValue && clinitionId.Value > 0)
+                {
+                    // Pre-assigned patient
+                    patient.ClinitionId = clinitionId.Value;
+                    patient.CompletedRegistration = true;
+                }
+                else
+                {
+                    // Unassigned patient
+                    patient.ClinitionId = null;
+                    patient.CompletedRegistration = false;
+                }
+
+                user = patient;
             }
             else
             {
@@ -61,7 +76,7 @@ namespace SensoreAPPMVC.Services
                 {
                     Name = name,
                     Email = email,
-                    HashedPassword = PasswordHasher.HashPassword(password), // TODO: Hash this properly!
+                    HashedPassword = hashedPassword,
                     Role = role,
                     DOB = dob
                 };
