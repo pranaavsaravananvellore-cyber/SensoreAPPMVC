@@ -496,9 +496,9 @@
             <img src="~/images/footerLoginIcon.png" alt="Logo" class="sidebar-logo">
             
             <div class="sidebar-nav">
-                <a href="@Url.Action("Dashboard", "Admin")" class="sidebar-btn" title="Dashboard"><i class='bx bx-grid'></i></a>
+                <a href="@Url.Action("Dashboard", "Admin")" class="sidebar-btn" title="Dashboard"><i class='bx bx-home'></i></a>
                 <button class="sidebar-btn" title="Feedback"><i class='bx bx-comment'></i></button>
-                <button class="sidebar-btn" title="Layout"><i class='bx bx-layout'></i></button>
+                <button class="sidebar-btn" title="Layout"><i class='bx bx-plus'></i></button>
             </div>
 
             <div class="sidebar-bottom">
@@ -559,8 +559,8 @@
                             <option value="Clinician" @@(Model.Role == "Clinician" ? "selected" : "")>Clinician</option>
                             <option value="Admin" @@(Model.Role == "Admin" ? "selected" : "")>Admin</option>
                         </select>
-                         ~~~ /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/ ~ ~~
-                        ~
+                
+                         
                         @if (ViewData.ModelState["Role"]?.Errors.Count > 0)
                         {
                             <div class="validation-error">@@ViewData.ModelState["Role"].Errors[0].ErrorMessage</div>

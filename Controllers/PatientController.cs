@@ -1,32 +1,47 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SensoreAPPMVC.Data;
-using Microsoft.AspNetCore;
+using SensoreAPPMVC.Models;
 
 namespace SensoreAPPMVC.Controllers
 {
     public class PatientController : Controller
     {
         private readonly AppDBContext _context;
+
         public PatientController(AppDBContext context)
         {
             _context = context;
         }
-        [Route("[controller]/[action]")]
+
+        // GET: /Patient/Dashboard
         public async Task<IActionResult> Dashboard()
         {
-            //validating patient access
-            var userId = HttpContext.Session.GetInt32("UserId");
-            var userRole = HttpContext.Session.GetString("UserRole");
-
-            if (userId == null || userRole != "Patient")
+            var userIdObj = HttpContext.Session.GetInt32("UserId");
+            if (userIdObj == null)
             {
                 return RedirectToAction("Login", "Account");
             }
-            
-            // Fetch necessary data for the patient dashboard
 
-            //send view
-            return View();
+            var userId = userIdObj.Value;
+
+            var patient = await _context.Users
+                .OfType<Patient>()
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (patient == null)
+            {
+                return NotFound("Patient not found.");
+            }
+
+            var vm = new PatientDashboardViewModel
+            {
+                PatientId = patient.UserId,
+                Name = patient.Name,
+                Email = patient.Email
+            };
+
+            return View("PatientDashboard", vm);
         }
     }
 }
