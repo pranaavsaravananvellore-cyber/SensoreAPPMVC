@@ -17,7 +17,7 @@ namespace SensoreAPPMVC.Models
             return _context.Users.Max(u => u.UserId) + 1;
         }
 
-        public User CreateUser(string Email, string password, string role, string name, DateOnly dob, int clinitionId = 0)
+        public User CreateUser(string Email, string password, string role, string name, DateOnly dob, int clinicianId = 0)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name is required", nameof(name));
@@ -45,8 +45,8 @@ namespace SensoreAPPMVC.Models
                     HashedPassword = hashed,
                     Role = "Patient", // note capitalisation – match PatientController check
                     DOB = dob,
-                    ClinitionId = clinitionId,
-                    CompletedRegistration = clinitionId != 0
+                    ClinicianId = clinicianId,
+                    CompletedRegistration = clinicianId != 0
                 };
             }
             else

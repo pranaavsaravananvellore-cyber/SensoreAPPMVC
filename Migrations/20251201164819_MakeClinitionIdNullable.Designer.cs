@@ -11,8 +11,8 @@ using SensoreAPPMVC.Data;
 namespace SensoreAPPMVC.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251201164819_MakeClinitionIdNullable")]
-    partial class MakeClinitionIdNullable
+    [Migration("20251201164819_MakeClinicianIdNullable")]
+    partial class MakeClinicianIdNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -65,7 +65,7 @@ namespace SensoreAPPMVC.Migrations
                 {
                     b.HasBaseType("SensoreAPPMVC.Models.User");
 
-                    b.Property<int?>("ClinitionId")
+                    b.Property<int?>("ClinicianId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("CompletedRegistration")

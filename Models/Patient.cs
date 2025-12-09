@@ -4,6 +4,6 @@ namespace SensoreAPPMVC.Models;
 
 public class Patient : User
 {
-    public int? ClinitionId { get; set; }
+    public int? ClinicianId { get; set; }
     public bool CompletedRegistration { get; set; }
 }

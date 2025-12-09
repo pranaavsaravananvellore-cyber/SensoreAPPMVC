@@ -5,7 +5,7 @@
 namespace SensoreAPPMVC.Migrations
 {
     /// <inheritdoc />
-    public partial class MakeClinitionIdNullable : Migration
+    public partial class MakeClinicianIdNullable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

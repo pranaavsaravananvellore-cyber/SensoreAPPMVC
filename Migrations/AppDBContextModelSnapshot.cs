@@ -62,7 +62,7 @@ namespace SensoreAPPMVC.Migrations
                 {
                     b.HasBaseType("SensoreAPPMVC.Models.User");
 
-                    b.Property<int?>("ClinitionId")
+                    b.Property<int?>("ClinicianId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("CompletedRegistration")

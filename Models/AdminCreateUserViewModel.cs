@@ -22,8 +22,8 @@ namespace SensoreAPPMVC.Models
         [Required(ErrorMessage = "Date of Birth is required.")]
         [DataType(DataType.Date)]
         public DateOnly DOB { get; set; }
-        public int? ClinitionId { get; set; }
+        public int? ClinicianId { get; set; }
 
-        public List<SelectListItem> ClinitionList { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> ClinicianList { get; set; } = new List<SelectListItem>();
     }
 }

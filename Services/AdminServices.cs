@@ -33,7 +33,7 @@ namespace SensoreAPPMVC.Services
             string password,
             string role,
             DateOnly dob,
-            int? clinitionId = null)
+            int? clinicianId = null)
         {
             // Check if email already exists
             var exists = await _context.Users.AnyAsync(u => u.Email == email);
@@ -55,16 +55,16 @@ namespace SensoreAPPMVC.Services
                     DOB = dob
                 };
 
-                if (clinitionId.HasValue && clinitionId.Value > 0)
+                if (clinicianId.HasValue && clinicianId.Value > 0)
                 {
                     // Pre-assigned patient
-                    patient.ClinitionId = clinitionId.Value;
+                    patient.ClinicianId = clinicianId.Value;
                     patient.CompletedRegistration = true;
                 }
                 else
                 {
                     // Unassigned patient
-                    patient.ClinitionId = null;
+                    patient.ClinicianId = null;
                     patient.CompletedRegistration = false;
                 }
 
@@ -95,7 +95,7 @@ namespace SensoreAPPMVC.Services
             string role,
             DateOnly dob,
             bool? completedRegistration = null,
-            int? clinitionId = null)
+            int? clinicianId = null)
         {
             var user = await GetUserByIdAsync(userId);
             if (user == null)
@@ -115,9 +115,9 @@ namespace SensoreAPPMVC.Services
             if (user is Patient patient)
             {
                 // If a clinician is explicitly provided and > 0, assign & auto-complete registration
-                if (clinitionId.HasValue && clinitionId.Value > 0)
+                if (clinicianId.HasValue && clinicianId.Value > 0)
                 {
-                    patient.ClinitionId = clinitionId.Value;
+                    patient.ClinicianId = clinicianId.Value;
                     patient.CompletedRegistration = true;
                 }
                 else

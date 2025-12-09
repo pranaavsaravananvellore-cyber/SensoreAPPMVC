@@ -328,7 +328,7 @@
                         </button>
                     </div>
                     <div class="card-content">
-                        @if (Model == null || !Model.Any(u => u is Patient p && p.ClinitionId == null))
+                        @if (Model == null || !Model.Any(u => u is Patient p && p.ClinicianId == null))
                         {
                             <p class="empty-state">No unassigned patients</p>
                         }
@@ -336,7 +336,7 @@
                         {
                             @foreach (var patient in Model
                                 .OfType<Patient>()
-                                .Where(p => p.ClinitionId == null))
+                                .Where(p => p.ClinicianId == null))
                             {
                                 <div style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 4px; border: 1px solid #e5e7eb; margin-bottom: 6px;">
                                     <span style="font-size: 14px; color: #374151;">@patient.Name (@patient.Email)</span>

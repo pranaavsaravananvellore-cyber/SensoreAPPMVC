@@ -52,8 +52,8 @@ namespace SensoreAPPMVC.Controllers
                     case "Admin":
                         return RedirectToAction("Dashboard", "Admin");
                         
-                    case "Clinition":
-                        return RedirectToAction("Dashboard", "Clinition");
+                    case "Clinician":
+                        return RedirectToAction("Dashboard", "Clinician");
                     case "Patient":
                         return RedirectToAction("Dashboard", "Patient");
                     default:

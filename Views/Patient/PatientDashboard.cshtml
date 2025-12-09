@@ -1,726 +1,274 @@
 @model SensoreAPPMVC.Models.PatientDashboardViewModel
+@using System.Text.Json
+
 @{
     ViewData["Title"] = "Patient Dashboard";
     Layout = null;
+    var historyJson = JsonSerializer.Serialize(
+        Model.History.Select(h => new {
+            date = h.Timestamp.ToString("yyyy-MM-dd"),
+            peak = h.PeakPressure,
+            contact = h.ContactAreaPercent,
+            isHighRisk = h.IsHighRisk
+        })
+    );
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>@ViewData["Title"]</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
-
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body { background: #0f172a; color: #e5e7eb; min-height: 100vh; display: flex; align-items: stretch; }
+        .wrapper { max-width: 1200px; margin: 24px auto; padding: 16px; width: 100%; }
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .header-title { font-size:24px; font-weight:600; }
+        .header-sub { font-size:14px; color:#9ca3af; }
 
-        body {
-            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;
-            background:#f3f4f6;
-            color:#111827;
-            min-height:100vh;
-            overflow: hidden; 
-        }
+        .cards { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:16px; }
+        .card { background:#020617; border-radius:16px; border:1px solid #1f2937; padding:16px; box-shadow:0 10px 25px rgba(15,23,42,0.8); }
+        .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .card-title { font-size:16px; font-weight:600; }
+        .card-sub { font-size:12px; color:#9ca3af; }
 
-        .layout {
-            display:grid;
-            grid-template-columns:80px 1fr;
-            min-height:100vh;
-        }
+        .metric-value { font-size:24px; font-weight:700; margin-top:4px; }
+        .metric-label { font-size:12px; color:#9ca3af; }
 
-        /* Sidebar */
-        .sidebar {
-            background:linear-gradient(180deg,#1f2937 0%,#111827 100%);
-            color:#e5e7eb;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            padding:24px 0;
-            gap:32px;
-        }
+        .pill { display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:4px 10px; border-radius:999px; }
+        .pill-ok { background:rgba(22,163,74,0.15); color:#4ade80; border:1px solid rgba(22,163,74,0.6); }
+        .pill-warn { background:rgba(220,38,38,0.1); color:#fca5a5; border:1px solid rgba(220,38,38,0.6); }
 
-        
-        .sidebar-logo {
-           
-            width:40px;
-            height:40px;
-            border-radius:0;          
-            overflow:visible;         
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            background:transparent;   
-        }
+        .layout { display:grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr); gap:16px; align-items:start; }
+        .chart-card { height: 340px; }
 
-        .sidebar-logo img {
-            width:34px;
-            height:34px;
-            object-fit:contain;
-            filter: invert(1);        
-        }
+        .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; border:1px solid #1e293b; color:#e5e7eb; }
 
-        .sidebar-nav {
-            display:flex;
-            flex-direction:column;
-            gap:18px;
-            margin-top:24px;
-        }
+        .table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+        .table th, .table td { padding:6px 8px; text-align:left; border-bottom:1px solid #111827; }
+        .table th { font-weight:500; color:#9ca3af; }
+        .pill-mini { padding:2px 8px; border-radius:999px; font-size:10px; border:1px solid rgba(220,38,38,0.6); color:#fca5a5; background:rgba(220,38,38,0.1); }
 
-        .sidebar-btn {
-            width:46px;height:46px;
-            border-radius:999px;
-            border:none;
-            background:transparent;
-            color:#9ca3af;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            cursor:pointer;
-            transition:all .2s;
-            font-size:20px; 
-        }
+        select { background:#020617; border-radius:999px; border:1px solid #1f2937; color:#e5e7eb; padding:6px 10px; font-size:12px; }
 
-        .sidebar-btn.active,
-        .sidebar-btn:hover {
-            background:#4b5563;
-            color:#fff;
-        }
-
-        .sidebar-bottom {
-            margin-top:auto;
-        }
-
-        /* Main */
-        .main {
-            padding:22px;
-            display:grid;
-            grid-template-rows:auto 1fr;
-            gap:16px;
-        }
-
-        .main-header {
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:16px;
-        }
-
-        .main-title {
-            font-size:22px;
-            font-weight:700;
-        }
-
-        .main-subtitle {
-            font-size:13px;
-            color:#6b7280;
-        }
-
-        .main-header-right {
-            display:flex;
-            gap:10px;
-            align-items:center;
-        }
-
-        .pill {
-            padding:6px 12px;
-            border-radius:999px;
-            font-size:12px;
-            background:#e5e7eb;
-            color:#4b5563;
-        }
-
-        .btn-outline {
-            padding:8px 14px;
-            border-radius:8px;
-            border:1px solid #d1d5db;
-            background:#fff;
-            font-size:13px;
-            cursor:pointer;
-        }
-
-        /* Dashboard grid */
-        .grid {
-            display:grid;
-            grid-template-columns: minmax(0,2fr) minmax(0,1.6fr);
-            grid-template-rows:auto auto;
-            gap:16px;
-        }
-
-        .card {
-            background:#fff;
-            border-radius:16px;
-            border:1px solid #e5e7eb;
-            padding:18px 20px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.06);
-        }
-
-        .card-header {
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:12px;
-        }
-
-        .card-title {
-            font-size:14px;
-            font-weight:600;
-        }
-
-        .card-subtitle {
-            font-size:12px;
-            color:#9ca3af;
-        }
-
-        /* Pressure / data card (left, tall) */
-        .pressure-card {
-            display:flex;
-            flex-direction:column;
-            gap:16px;
-            grid-row:span 2;
-        }
-
-        .pressure-map {
-            flex:1;
-            border-radius:14px;
-            border:2px dashed #a855f7;
-            background:linear-gradient(135deg,#efe9ff,#f5f3ff);
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
-            min-height:260px;
-        }
-
-        .pressure-map-icon {
-            font-size:30px;
-            color:#7c3aed;
-        }
-
-        .pressure-map-text {
-            font-size:13px;
-            color:#6b21a8;
-        }
-
-        .slider-row {
-            display:flex;
-            align-items:center;
-            gap:10px;
-        }
-
-        .slider {
-            flex:1;
-            height:8px;
-            background:linear-gradient(90deg,#7c3aed 0%,#7c3aed 30%,#e5e7eb 30%);
-            border-radius:999px;
-            position:relative;
-        }
-
-        .slider-thumb {
-            position:absolute;
-            left:30%;
-            top:50%;
-            transform:translate(-50%,-50%);
-            width:20px;
-            height:20px;
-            border-radius:50%;
-            background:#5b21b6;
-            border:3px solid #fff;
-            box-shadow:0 2px 8px rgba(0,0,0,0.25);
-            cursor:grab;
-        }
-
-        .slider-thumb:active {
-            cursor:grabbing;
-            transform:translate(-50%,-50%) scale(1.1);
-        }
-
-        .actions-col {
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-        }
-
-        .action-btn {
-            padding:10px 14px;
-            border-radius:9px;
-            border:1px solid #e5e7eb;
-            background:#f9fafb;
-            font-size:13px;
-            display:flex;
-            align-items:center;
-            gap:8px;
-            cursor:pointer;
-            transition:all .15s;
-            color:#4b5563;
-        }
-
-        .action-btn span.icon {
-            font-size:16px;
-        }
-
-        .action-btn:hover {
-            background:#ede9fe;
-            border-color:#a855f7;
-            color:#4c1d95;
-        }
-
-        /* Analytics card */
-        .analytics-card .metrics {
-            display:flex;
-            flex-direction:column;
-            gap:18px;
-        }
-
-        .metric-row {
-            display:flex;
-            align-items:center;
-            gap:16px;
-        }
-
-        .progress-ring {
-            width:60px;
-            height:60px;
-            position:relative;
-        }
-
-        .progress-ring svg {
-            transform:rotate(-90deg);
-        }
-
-        .progress-ring circle {
-            fill:none;
-            stroke-width:6;
-        }
-
-        .progress-bg { stroke:#e5e7eb; }
-        .progress-bar {
-            stroke:#7c3aed;
-            stroke-linecap:round;
-            stroke-dasharray:188.5;
-            stroke-dashoffset:188.5;
-            transition:stroke-dashoffset .5s;
-        }
-
-        .metric-label {
-            font-size:13px;
-            color:#4b5563;
-        }
-
-        /* Feedback card */
-        .feedback-card .feedback-entry {
-            padding:10px 0;
-            border-bottom:1px solid #f3f4f6;
-            font-size:13px;
-        }
-
-        .feedback-card .feedback-entry:last-child {
-            border-bottom:none;
-        }
-
-        .feedback-timestamp {
-            font-weight:600;
-            margin-bottom:4px;
-        }
-
-        .feedback-text { color:#4b5563; }
-
-        .feedback-actions {
-            float:right;
-            display:flex;
-            gap:6px;
-        }
-
-        .icon-btn {
-            border:none;
-            background:transparent;
-            cursor:pointer;
-            color:#6b7280;
-        }
-
-        /* Alerts card */
-        .alerts-card .alert-item {
-            margin-bottom:10px;
-            padding:10px;
-            border-radius:10px;
-            background:#f9fafb;
-            font-size:13px;
-            cursor:pointer;
-            transition:background .15s;
-        }
-
-        .alerts-card .alert-item:hover {
-            background:#e0f2fe;
-        }
-
-        .alert-title {
-            font-weight:600;
-            margin-bottom:3px;
-        }
-
-        .alert-details {
-            color:#4b5563;
-            line-height:1.4;
-        }
-
-        .alert-date {
-            font-size:12px;
-            text-align:right;
-            margin-top:3px;
-            color:#6b7280;
-        }
-
-        /* Progress card */
-        .progress-card .time-selector {
-            display:inline-flex;
-            border-radius:999px;
-            border:1px solid #e5e7eb;
-            padding:3px;
-            margin-bottom:18px;
-        }
-
-        .progress-card .time-btn {
-            border:none;
-            background:transparent;
-            padding:7px 14px;
-            font-size:12px;
-            border-radius:999px;
-            cursor:pointer;
-        }
-
-        .progress-card .time-btn.active {
-            background:#e5e7eb;
-            font-weight:500;
-        }
-
-        .change-metrics {
-            display:flex;
-            flex-direction:column;
-            gap:14px;
-        }
-
-        .change-row {
-            display:flex;
-            align-items:center;
-            gap:16px;
-        }
-
-        .change-label { font-size:13px; color:#4b5563; }
     </style>
-
-    <style>
-    @@media (max-width:1024px) {
-        .layout { grid-template-columns:60px 1fr; }
-        .grid { grid-template-columns:1fr; grid-auto-rows:auto; }
-    }
-
-    @@media (max-width:640px) {
-        .main { padding:14px; }
-    }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <img src="~/images/smallerFooterLOgo.png" alt="Sensore Logo" />
-        </div>
-        <div class="sidebar-nav">
-            <button class="sidebar-btn active" title="Dashboard">
-                <i class="fas fa-home"></i>
-            </button>
-            <button class="sidebar-btn" title="Data">
-                <i class="fas fa-chart-line"></i>
-            </button>
-            <button class="sidebar-btn" title="Feedback">
-                <i class="fas fa-comments"></i>
-            </button>
-        </div>
-        <div class="sidebar-bottom">
-            <button class="sidebar-btn" title="Logout"
-                    onclick="location.href='@Url.Action("Logout","Admin")'">
-                <i class="fas fa-power-off"></i>
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main -->
-    <main class="main">
-        <header class="main-header">
+    <div class="wrapper">
+        <div class="header">
             <div>
-                <div class="main-title">
-                    Patient dashboard
-                    @if (!string.IsNullOrEmpty(Model.Name))
+                <div class="header-title">Welcome back, @Model.Name</div>
+                <div class="header-sub">
+                    Live overview of your pressure distribution and flagged risk events.
+                </div>
+            </div>
+            <div>
+                <span class="badge">Period: @Model.SelectedPeriodLabel</span>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Current peak pressure</div>
+                        <div class="card-sub">Highest value in the most recent pressure map</div>
+                    </div>
+                </div>
+                <div class="metric-value">@Model.CurrentPeakPressure.ToString("F1")</div>
+                <div class="metric-label">Peak value (units depend on sensor calibration)</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Current contact area</div>
+                        <div class="card-sub">Percentage of active (non-zero) cells</div>
+                    </div>
+                </div>
+                <div class="metric-value">@Model.CurrentContactAreaPercent.ToString("F1")%</div>
+                <div class="metric-label">Non-zero cells across the latest map</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Risk status</div>
+                        <div class="card-sub">Automatically flagged when peak exceeds threshold</div>
+                    </div>
+                </div>
+                @if (Model.CurrentIsHighRisk)
+                {
+                    <div class="pill pill-warn">
+                        <span>High-risk region detected</span>
+                    </div>
+                    <div class="metric-label" style="margin-top:8px;">
+                        Peak pressure is above the configured threshold. Please review posture or offload pressure.
+                    </div>
+                }
+                else
+                {
+                    <div class="pill pill-ok">
+                        <span>No high-risk regions detected</span>
+                    </div>
+                    <div class="metric-label" style="margin-top:8px;">
+                        All monitored regions are currently below the high-risk threshold.
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Comparison report</div>
+                        <div class="card-sub">Current vs previous period averages</div>
+                    </div>
+                </div>
+                <div class="metric-label" style="margin-top:4px;">
+                    Peak pressure:
+                    <strong>@Model.CurrentAvgPeakPressure.ToString("F1")</strong>
+                    vs
+                    <strong>@Model.PreviousAvgPeakPressure.ToString("F1")</strong>
+                </div>
+                <div class="metric-label">
+                    Contact area:
+                    <strong>@Model.CurrentAvgContactAreaPercent.ToString("F1")%</strong>
+                    vs
+                    <strong>@Model.PreviousAvgContactAreaPercent.ToString("F1")%</strong>
+                </div>
+                <div class="metric-label">
+                    High-risk events:
+                    <strong>@Model.CurrentHighRiskEventCount</strong>
+                    vs
+                    <strong>@Model.PreviousHighRiskEventCount</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="card chart-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Pressure metrics over time</div>
+                        <div class="card-sub">Peak pressure and contact area across the selected period</div>
+                    </div>
+                    <form method="get" asp-controller="Patient" asp-action="Dashboard">
+                        <input type="hidden" name="id" value="@Model.PatientId" />
+                        <select name="period" onchange="this.form.submit()">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d">Last 30 days</option>
+                            <option value="all">All data</option>
+                        </select>
+                    </form>
+                </div>
+                <canvas id="pressureChart" style="width:100%; height:260px;"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Flagged high-pressure events</div>
+                        <div class="card-sub">Automatically detected when peak pressure is high</div>
+                    </div>
+                </div>
+                @if (Model.History.Any(h => h.IsHighRisk))
+                {
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Peak</th>
+                            <th>Contact area</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var point in Model.History.Where(h => h.IsHighRisk).OrderByDescending(h => h.Timestamp))
+                        {
+                            <tr>
+                                <td>@point.Timestamp.ToString("yyyy-MM-dd")</td>
+                                <td>@point.PeakPressure.ToString("F1")</td>
+                                <td>@point.ContactAreaPercent.ToString("F1")%</td>
+                                <td><span class="pill-mini">High risk</span></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="metric-label" style="margin-top:8px;">
+                        No high-pressure events have been detected for the selected period.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const history = @Html.Raw(historyJson);
+
+        const ctx = document.getElementById('pressureChart').getContext('2d');
+
+        const labels = history.map(p => p.date);
+        const peakData = history.map(p => p.peak);
+        const contactData = history.map(p => p.contact);
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
                     {
-                        <span style="font-weight:400;color:#6b7280;"> · @Model.Name</span>
+                        label: 'Peak pressure',
+                        data: peakData,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Contact area (%)',
+                        data: contactData,
+                        borderWidth: 2,
+                        borderDash: [4, 4],
+                        tension: 0.3,
+                        yAxisID: 'y1'
                     }
-                </div>
-                <div class="main-subtitle">Overview of your pressure data and alerts</div>
-            </div>
-            <div class="main-header-right">
-                <div class="pill">
-                    <i class="fas fa-user" style="margin-right:6px;"></i>@Model.Email
-                </div>
-                <button class="btn-outline" onclick="location.reload()">
-                    <i class="fas fa-rotate-right" style="margin-right:6px;"></i>Refresh
-                </button>
-            </div>
-        </header>
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e5e7eb', font: { size: 11 } }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af', maxRotation: 0, autoSkip: true },
+                        grid: { display: false }
+                    },
+                    y: {
+                        position: 'left',
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(31,41,55,0.6)' }
+                    },
+                    y1: {
+                        position: 'right',
+                        ticks: { color: '#9ca3af' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        };
 
-        <section class="grid">
-            <!-- Pressure / data -->
-            <section class="card pressure-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Pressure map</div>
-                        <div class="card-subtitle">Live or latest recording</div>
-                    </div>
-                </div>
-
-                <div class="pressure-map">
-                    <div class="pressure-map-icon">⟷</div>
-                    <div class="pressure-map-text">
-                        Pressure map will appear here once sensor data is uploaded.
-                    </div>
-                </div>
-
-                <div class="slider-row">
-                    <div class="slider" id="slider">
-                        <div class="slider-thumb" id="sliderThumb"></div>
-                    </div>
-                    <span style="font-size:18px;color:#4b5563;">•</span>
-                </div>
-
-                <div class="actions-col">
-                    <button class="action-btn" onclick="uploadSensorData()">
-                        <i class='bx  bx-spanner'></i> 
-                        <span>Upload new sensor data</span>
-                    </button>
-                    <button class="action-btn" onclick="manageData()">
-                        <i class='bx  bx-folder'></i>
-                        <span>Manage recorded data</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Analytics -->
-            <section class="card analytics-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Current analytics</div>
-                        <div class="card-subtitle">Based on latest data</div>
-                    </div>
-                </div>
-                <div class="metrics">
-                    <div class="metric-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="progress1"></circle>
-                            </svg>
-                        </div>
-                        <div class="metric-label">% peak pressure index</div>
-                    </div>
-                    <div class="metric-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="progress2"></circle>
-                            </svg>
-                        </div>
-                        <div class="metric-label">% contact area</div>
-                    </div>
-                    <div class="metric-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="progress3"></circle>
-                            </svg>
-                        </div>
-                        <div class="metric-label">% alert detections</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Feedback -->
-            <section class="card feedback-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Feedback</div>
-                        <div class="card-subtitle">Clinician and patient notes</div>
-                    </div>
-                </div>
-
-                <div class="feedback-entry">
-                    <div class="feedback-actions">
-                        <button class="icon-btn" onclick="editFeedback('clinician')">✎</button>
-                        <button class="icon-btn" onclick="undoFeedback()">↶</button>
-                    </div>
-                    <div class="feedback-timestamp">15:00 · 13/04/2025</div>
-                    <div class="feedback-text">Clinician feedback will appear here.</div>
-                </div>
-
-                <div class="feedback-entry">
-                    <div class="feedback-actions">
-                        <button class="icon-btn" onclick="editFeedback('patient')">✎</button>
-                    </div>
-                    <div class="feedback-timestamp">15:00 · 13/04/2025</div>
-                    <div class="feedback-text">Your own feedback will appear here.</div>
-                </div>
-            </section>
-
-            <!-- Alerts + Progress stacked in right column -->
-            <section class="card alerts-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Alerts</div>
-                        <div class="card-subtitle">Latest notifications</div>
-                    </div>
-                </div>
-
-                <div class="alert-item">
-                    <div class="alert-title">Pressure alert</div>
-                    <div class="alert-details">
-                        Detected at 15:00, left side, duration 30 minutes
-                    </div>
-                    <div class="alert-date">13/04/2025</div>
-                </div>
-                <div class="alert-item">
-                    <div class="alert-title">Pressure alert</div>
-                    <div class="alert-details">
-                        Detected at 12:10, right side, duration 13 minutes
-                    </div>
-                    <div class="alert-date">23/04/2025</div>
-                </div>
-            </section>
-
-            <section class="card progress-card">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">Progress</div>
-                        <div class="card-subtitle">Over time</div>
-                    </div>
-                </div>
-
-                <div class="time-selector">
-                    <button class="time-btn" onclick="changeTimePeriod('1week', this)">1 week</button>
-                    <button class="time-btn active" onclick="changeTimePeriod('3months', this)">3 months</button>
-                    <button class="time-btn" onclick="changeTimePeriod('6months', this)">6 months</button>
-                </div>
-
-                <div class="change-metrics">
-                    <div class="change-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="change1"></circle>
-                            </svg>
-                        </div>
-                        <div class="change-label">% change (metric 1)</div>
-                    </div>
-                    <div class="change-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="change2"></circle>
-                            </svg>
-                        </div>
-                        <div class="change-label">% change (metric 2)</div>
-                    </div>
-                    <div class="change-row">
-                        <div class="progress-ring">
-                            <svg width="60" height="60">
-                                <circle class="progress-bg" cx="30" cy="30" r="26"></circle>
-                                <circle class="progress-bar" cx="30" cy="30" r="26" id="change3"></circle>
-                            </svg>
-                        </div>
-                        <div class="change-label">% change (metric 3)</div>
-                    </div>
-                </div>
-            </section>
-        </section>
-    </main>
-</div>
-
-<script>
-    // Slider
-    const slider = document.getElementById('slider');
-    const sliderThumb = document.getElementById('sliderThumb');
-    let dragging = false;
-
-    sliderThumb.addEventListener('mousedown', () => { dragging = true; });
-    document.addEventListener('mouseup', () => { dragging = false; });
-
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        const rect = slider.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        x = Math.max(0, Math.min(x, rect.width));
-        const pct = (x / rect.width) * 100;
-        sliderThumb.style.left = pct + '%';
-        slider.style.background =
-            `linear-gradient(90deg,#7c3aed 0%,#7c3aed ${pct}%,#e5e7eb ${pct}%)`;
-    });
-
-    function uploadSensorData() {
-        alert('Upload sensor data dialog would open here');
-    }
-
-    function manageData() {
-        alert('Manage recorded data dialog would open here');
-    }
-
-    function editFeedback(who) {
-        alert('Edit ' + who + ' feedback (to be implemented)');
-    }
-
-    function undoFeedback() {
-        alert('Undo last feedback change (to be implemented)');
-    }
-
-    function changeTimePeriod(period, btn) {
-        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateProgress(period);
-    }
-
-    function updateProgress(period) {
-        const circumference = 188.5;
-        const sets = {
-            '1week':[70,85,100],
-            '3months':[60,75,90],
-            '6months':[45,60,80]
-        }[period] || [60,75,90];
-
-        [ 'change1','change2','change3' ].forEach((id, i) => {
-            const c = document.getElementById(id);
-            const v = sets[i];
-            const off = circumference - (v / 100 * circumference);
-            c.style.strokeDashoffset = off;
-        });
-    }
-
-    function animateAnalytics() {
-        const circumference = 188.5;
-        const vals = [50,75,35];
-        ['progress1','progress2','progress3'].forEach((id, i) => {
-            const c = document.getElementById(id);
-            const v = vals[i];
-            const off = circumference - (v / 100 * circumference);
-            setTimeout(() => { c.style.strokeDashoffset = off; }, i * 200);
-        });
-        updateProgress('3months');
-    }
-
-    window.addEventListener('load', animateAnalytics);
-</script>
+        if (labels.length > 0) {
+            new Chart(ctx, chartConfig);
+        }
+    </script>
 </body>
 </html>

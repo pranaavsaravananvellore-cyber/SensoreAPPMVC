@@ -23,7 +23,7 @@ namespace SensoreAPPMVC.Migrations
                     DOB = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Role = table.Column<string>(type: "TEXT", nullable: false),
                     UserType = table.Column<string>(type: "TEXT", maxLength: 8, nullable: false, defaultValue: "User"),
-                    ClinitionId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ClinicianId = table.Column<int>(type: "INTEGER", nullable: true),
                     CompletedRegistration = table.Column<bool>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>

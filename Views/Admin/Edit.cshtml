@@ -291,7 +291,7 @@
             background-color: #6b7280;
         }
 
-        .modal {
+        .model {
             display: none;
             position: fixed;
             z-index: 1000;
@@ -303,7 +303,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        .modal.show {
+        .model.show {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -314,7 +314,7 @@
             to { opacity: 1; }
         }
 
-        .modal-content {
+        .model-content {
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -336,7 +336,7 @@
             }
         }
 
-        .modal-header {
+        .model-header {
             padding: 20px;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
@@ -344,19 +344,19 @@
             justify-content: space-between;
         }
 
-        .modal-header-left {
+        .model-header-left {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .modal-title {
+        .model-title {
             font-size: 18px;
             font-weight: 600;
             color: #1f2937;
         }
 
-        .modal-close {
+        .model-close {
             background: none;
             border: none;
             font-size: 24px;
@@ -366,11 +366,11 @@
             padding: 4px;
         }
 
-        .modal-close:hover {
+        .model-close:hover {
             color: #1f2937;
         }
 
-        .modal-body {
+        .model-body {
             padding: 24px;
             display: flex;
             flex-direction: column;
@@ -430,7 +430,7 @@
             flex: 1;
         }
 
-        .modal-actions {
+        .model-actions {
             display: flex;
             gap: 12px;
             padding-top: 12px;
@@ -502,7 +502,7 @@
             .main-content { padding: 16px; }
             .header-title { font-size: 24px; }
             .form-card { padding: 16px; }
-            .modal-content { width: 95%; }
+            .model-content { width: 95%; }
         }
     </style>
 </head>
@@ -608,14 +608,14 @@
                         <!-- Show assigned clinician or button to change -->
                         <div class="form-group">
                             <label class="form-label">Assigned Clinician</label>
-                            <div id="assignedClinicianDisplay" style="@(Model.ClinitionId.HasValue && Model.ClinitionId.Value > 0 ? "display:block;" : "display:none;")">
+                            <div id="assignedClinicianDisplay" style="@(Model.ClinicianId.HasValue && Model.ClinicianId.Value > 0 ? "display:block;" : "display:none;")">
                                 <div class="assigned-clinician-display">
                                     <i class='bx bx-check-circle'></i>
                                     <span id="clinicianNameDisplay"></span>
                                 </div>
                             </div>
-                            <button type="button" class="manage-btn" style="margin-top: 8px;" onclick="openClinicianModal()">
-                                @(Model.ClinitionId.HasValue && Model.ClinitionId.Value > 0 ? "Change Clinician" : "Assign Clinician")
+                            <button type="button" class="manage-btn" style="margin-top: 8px;" onclick="openClinicianModel()">
+                                @(Model.ClinicianId.HasValue && Model.ClinicianId.Value > 0 ? "Change Clinician" : "Assign Clinician")
                             </button>
                         </div>
 
@@ -630,7 +630,7 @@
                     </div>
 
                     <!-- Hidden field to store selected clinician ID -->
-                    <input type="hidden" id="clinitionId" name="ClinitionId" value="@Model.ClinitionId">
+                    <input type="hidden" id="clinicianId" name="ClinicianId" value="@Model.ClinicianId">
 
                     <button type="submit" class="submit-button">Save Changes</button>
                 </form>
@@ -646,17 +646,17 @@
         </div>
     </div>
 
-    <div id="clinicianModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-header-left">
+    <div id="clinicianModel" class="model">
+        <div class="model-content">
+            <div class="model-header">
+                <div class="model-header-left">
                     <i class='bx bx-left-arrow-alt' style="font-size: 18px; color: #6b7280;"></i>
-                    <h2 class="modal-title">Search clinician</h2>
+                    <h2 class="model-title">Search clinician</h2>
                 </div>
-                <button class="modal-close" onclick="closeClinicianModal()">&times;</button>
+                <button class="model-close" onclick="closeClinicianModel()">&times;</button>
             </div>
             
-            <div class="modal-body">
+            <div class="model-body">
                 <input 
                     type="text" 
                     id="clinicianSearch" 
@@ -666,12 +666,12 @@
                 />
 
                 <div class="radio-group" id="clinicianList">
-                    @if (Model.ClinitionList != null && Model.ClinitionList.Any())
+                    @if (Model.ClinicianList != null && Model.ClinicianList.Any())
                     {
-                        @foreach (var clinician in Model.ClinitionList)
+                        @foreach (var clinician in Model.ClinicianList)
                         {
                             <label class="radio-item">
-                                <input type="radio" name="selectedClinician" value="@clinician.Value" data-name="@clinician.Text" @(Model.ClinitionId.ToString() == clinician.Value ? "checked" : "")>
+                                <input type="radio" name="selectedClinician" value="@clinician.Value" data-name="@clinician.Text" @(Model.ClinicianId.ToString() == clinician.Value ? "checked" : "")>
                                 <span class="radio-label">@clinician.Text</span>
                             </label>
                         }
@@ -682,7 +682,7 @@
                     }
                 </div>
 
-                <div class="modal-actions">
+                <div class="model-actions">
                     <button type="button" class="clear-button" onclick="clearClinicianFields()">Clear selection</button>
                     <button type="button" class="submit-clinician-button" id="submitClinicianBtn" onclick="submitWithClinician()">Assign Clinician</button>
                 </div>
@@ -699,17 +699,17 @@
                 patientFields.style.display = 'block';
             } else {
                 patientFields.style.display = 'none';
-                document.getElementById('clinitionId').value = '';
+                document.getElementById('clinicianId').value = '';
             }
         }
 
-        function openClinicianModal() {
-            document.getElementById('clinicianModal').classList.add('show');
+        function openClinicianModel() {
+            document.getElementById('clinicianModel').classList.add('show');
             updateSubmitButtonState();
         }
 
-        function closeClinicianModal() {
-            document.getElementById('clinicianModal').classList.remove('show');
+        function closeClinicianModel() {
+            document.getElementById('clinicianModel').classList.remove('show');
         }
 
         function filterClinicians() {
@@ -731,7 +731,7 @@
             document.querySelectorAll('input[name="selectedClinician"]').forEach(radio => {
                 radio.checked = false;
             });
-            document.getElementById('clinitionId').value = '';
+            document.getElementById('clinicianId').value = '';
             document.getElementById('assignedClinicianDisplay').style.display = 'none';
             updateSubmitButtonState();
             filterClinicians();
@@ -743,12 +743,12 @@
                 const clinicianId = selectedRadio.value;
                 const clinicianName = selectedRadio.getAttribute('data-name');
                 
-                document.getElementById('clinitionId').value = clinicianId;
+                document.getElementById('clinicianId').value = clinicianId;
                 document.getElementById('clinicianNameDisplay').textContent = clinicianName;
                 document.getElementById('assignedClinicianDisplay').style.display = 'block';
                 
                 console.log('Selected clinician ID:', clinicianId);
-                closeClinicianModal();
+                closeClinicianModel();
             }
         }
 
@@ -764,9 +764,9 @@
         });
 
         window.onclick = function(event) {
-            const modal = document.getElementById('clinicianModal');
-            if (event.target === modal) {
-                closeClinicianModal();
+            const model = document.getElementById('clinicianModel');
+            if (event.target === model) {
+                closeClinicianModel();
             }
         }
 
@@ -774,7 +774,7 @@
             handleRoleChange();
             
             // Display current clinician name if assigned
-            const clinicianId = document.getElementById('clinitionId').value;
+            const clinicianId = document.getElementById('clinicianId').value;
             if (clinicianId) {
                 const selectedRadio = document.querySelector(`input[name="selectedClinician"][value="${clinicianId}"]`);
                 if (selectedRadio) {

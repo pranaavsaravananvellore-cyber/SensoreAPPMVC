@@ -42,7 +42,7 @@ namespace SensoreAPPMVC.Controllers
 
             // Load clinicians for dropdown
             var clinicians = await _adminServices.GetAllCliniciansAsync();
-            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            model.ClinicianList = clinicians.Select(c => new SelectListItem
             {
                 Value = c.UserId.ToString(),  // This is the ID (what gets sent to server)
                 Text = c.Name                  // This is what the user sees
@@ -58,7 +58,7 @@ namespace SensoreAPPMVC.Controllers
         {
             // Reload clinicians if validation fails
             var clinicians = await _adminServices.GetAllCliniciansAsync();
-            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            model.ClinicianList = clinicians.Select(c => new SelectListItem
             {
                 Value = c.UserId.ToString(),
                 Text = c.Name
@@ -73,7 +73,7 @@ namespace SensoreAPPMVC.Controllers
             model.Password,
             model.Role,
             model.DOB,
-            model.ClinitionId
+            model.ClinicianId
         );
 
         if (!success)
@@ -82,7 +82,7 @@ namespace SensoreAPPMVC.Controllers
             
             // Reload clinicians
             var clinicians = await _adminServices.GetAllCliniciansAsync();
-            model.ClinitionList = clinicians.Select(c => new SelectListItem
+            model.ClinicianList = clinicians.Select(c => new SelectListItem
             {
                 Value = c.UserId.ToString(),
                 Text = c.Name
@@ -129,12 +129,12 @@ namespace SensoreAPPMVC.Controllers
                 DOB = user.DOB,
                 IsPatient = patient != null,
                 CompletedRegistration = patient?.CompletedRegistration ?? false,
-                ClinitionId = patient?.ClinitionId ?? 0
+                ClinicianId = patient?.ClinicianId ?? 0
             };
 
             // Load clinicians for dropdown
             var clinicians = await _adminServices.GetAllCliniciansAsync();
-            vm.ClinitionList = clinicians.Select(c => new SelectListItem
+            vm.ClinicianList = clinicians.Select(c => new SelectListItem
             {
                 Value = c.UserId.ToString(),
                 Text = c.Name
@@ -150,7 +150,7 @@ namespace SensoreAPPMVC.Controllers
             {
                 // Reload clinicians if validation fails
                 var clinicians = await _adminServices.GetAllCliniciansAsync();
-                model.ClinitionList = clinicians.Select(c => new SelectListItem
+                model.ClinicianList = clinicians.Select(c => new SelectListItem
                 {
                     Value = c.UserId.ToString(),
                     Text = c.Name
@@ -166,7 +166,7 @@ namespace SensoreAPPMVC.Controllers
                 model.Role,
                 model.DOB,
                 completedRegistration: null,    // no manual slider
-                clinitionId: model.ClinitionId  // clinician drives completion
+                clinicianId: model.ClinicianId  // clinician drives completion
             );
 
             if (!success)
@@ -174,7 +174,7 @@ namespace SensoreAPPMVC.Controllers
                 ModelState.AddModelError("", "Update failed. Email may already be in use.");
                 
                 var clinicians = await _adminServices.GetAllCliniciansAsync();
-                model.ClinitionList = clinicians.Select(c => new SelectListItem
+                model.ClinicianList = clinicians.Select(c => new SelectListItem
                 {
                     Value = c.UserId.ToString(),
                     Text = c.Name
