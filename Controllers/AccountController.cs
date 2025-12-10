@@ -46,6 +46,7 @@ namespace SensoreAPPMVC.Controllers
                 HttpContext.Session.SetString("UserName", user.Name);
                 HttpContext.Session.SetString("UserRole", user.Role);
                 Console.WriteLine($"Session Set - UserId: {user.UserId}, Name: {user.Name}, Role: {user.Role}");
+                
                 //redirecting to appropirate dashboard based on user role
                 switch (user.Role)
                 {
@@ -55,11 +56,9 @@ namespace SensoreAPPMVC.Controllers
                     case "Clinician":
                         return RedirectToAction("Dashboard", "Clinician");
                     case "Patient":
-                        return RedirectToAction("Dashboard", "Patient");
+                        return RedirectToAction("Dashboard", "Patient", new { id = user.UserId });
                     default:
-
                         return RedirectToAction("Login", "Account");
-
                 }
             }
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
