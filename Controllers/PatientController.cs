@@ -14,10 +14,12 @@ namespace SensoreAPPMVC.Controllers
     public class PatientController : Controller
     {
         private readonly AppDBContext _context;
+        private readonly UploadHandler _uploadHandler;
 
-        public PatientController(AppDBContext context)
+        public PatientController(AppDBContext context, UploadHandler uploadHandler)
         {
             _context = context;
+            _uploadHandler = uploadHandler;
         }
 
         /// <summary>
@@ -32,13 +34,10 @@ namespace SensoreAPPMVC.Controllers
         [RoleCheck("Patient")]
         public async Task<IActionResult> Dashboard(int id, string? period = "7d")
         {
-            // Get logged-in user from session
             var sessionUserId = HttpContext.Session.GetInt32("UserId");
 
-            // AUTHORIZATION CHECK: Patients can only view their own data
             if (id != sessionUserId)
             {
-                // Redirect to their own dashboard
                 return RedirectToAction("Dashboard", "Patient", new { id = sessionUserId });
             }
 
@@ -50,7 +49,6 @@ namespace SensoreAPPMVC.Controllers
                 return NotFound("Patient not found.");
             }
 
-            // Resolve date range from the requested period.
             DateTime? from = null;
             DateTime? to = null;
             var now = DateTime.UtcNow.Date;
@@ -60,12 +58,12 @@ namespace SensoreAPPMVC.Controllers
             {
                 case "7d":
                     from = now.AddDays(-6);
-                    to = now;
+                    to = now.AddDays(1);
                     periodLabel = "Last 7 days";
                     break;
                 case "30d":
                     from = now.AddDays(-29);
-                    to = now;
+                    to = now.AddDays(1);
                     periodLabel = "Last 30 days";
                     break;
                 default:
@@ -74,10 +72,8 @@ namespace SensoreAPPMVC.Controllers
                     break;
             }
 
-            // Folder where pressure map CSV files are stored.
-            // Expected naming convention: {patientId}_yyyyMMdd.csv
-            var pressureRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "pressuredata");
-            var history = PressureDataAnalyzer.LoadPatientHistory(patient.UserId, pressureRoot, from, to);
+            // Load from DATABASE instead of file system
+            var history = PressureDataAnalyzer.LoadPatientHistoryFromDatabase(_context, patient.UserId, from, to);
 
             var vm = new PatientDashboardViewModel
             {
@@ -108,7 +104,36 @@ namespace SensoreAPPMVC.Controllers
                 vm.PreviousHighRiskEventCount = prevHighRisk;
             }
 
+            ViewBag.SelectedPeriod = period ?? "7d";
             return View("PatientDashboard", vm);
+        }
+
+        [Route("Patient/UploadFile")]
+        [HttpPost]
+        public async Task<IActionResult> UploadFile(IFormFile file)
+        {
+            var patientId = HttpContext.Session.GetInt32("UserId");
+            if (patientId == null) return Unauthorized();
+
+            var (success, message, recordCount) = await _uploadHandler.Upload(file, patientId.Value);
+            return success 
+                ? Ok(new { success = true, message = message, recordCount = recordCount })
+                : BadRequest(new { success = false, message = message });
+        }
+
+        [Route("Patient/ClearData")]
+        [HttpPost]
+        public async Task<IActionResult> ClearData()
+        {
+            var patientId = HttpContext.Session.GetInt32("UserId");
+            if (patientId == null) return Unauthorized();
+
+            var records = _context.PressureMaps.Where(p => p.PatientId == patientId);
+            var count = records.Count();
+            _context.PressureMaps.RemoveRange(records);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, recordsDeleted = count });
         }
     }
 }

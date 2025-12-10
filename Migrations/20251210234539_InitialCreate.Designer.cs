@@ -11,14 +11,46 @@ using SensoreAPPMVC.Data;
 namespace SensoreAPPMVC.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251129214034_Init")]
-    partial class Init
+    [Migration("20251210234539_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
+
+            modelBuilder.Entity("SensoreAPPMVC.Models.PressureMap", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("ContactAreaPercent")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GridData")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsHighRisk")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("PeakPressure")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PressureMaps");
+                });
 
             modelBuilder.Entity("SensoreAPPMVC.Models.User", b =>
                 {
@@ -65,7 +97,7 @@ namespace SensoreAPPMVC.Migrations
                 {
                     b.HasBaseType("SensoreAPPMVC.Models.User");
 
-                    b.Property<int>("ClinicianId")
+                    b.Property<int?>("ClinicianId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("CompletedRegistration")

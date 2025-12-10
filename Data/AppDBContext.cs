@@ -1,6 +1,7 @@
 namespace SensoreAPPMVC.Data
 {
     using SensoreAPPMVC.Models;
+    using SensoreAPPMVC.Utilities;
     using Microsoft.EntityFrameworkCore;
 
     public class AppDBContext : DbContext
@@ -9,6 +10,7 @@ namespace SensoreAPPMVC.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Patient> Patients { get; set; }
+        public DbSet<PressureMap> PressureMaps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

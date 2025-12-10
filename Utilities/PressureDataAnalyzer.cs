@@ -4,132 +4,77 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using SensoreAPPMVC.Models;
+using SensoreAPPMVC.Data;
 
 namespace SensoreAPPMVC.Utilities
 {
     /// <summary>
-    /// Helper for loading and analysing pressure map data stored as CSV files.
-    /// Each CSV file represents a chronological stack of 32x32 pressure maps.
-    /// For dashboard metrics we aggregate the whole file into a single
-    /// PressureTimePoint (peak and average contact area).
+    /// Helper for loading and analysing pressure map data.
+    /// Loads from database and aggregates by date.
     /// </summary>
     public static class PressureDataAnalyzer
     {
-        /// <summary>
-        /// High pressure threshold for flagging risk events.
-        /// This can be made configurable; for now it is a sensible default.
-        /// </summary>
         public const double HighPressureThreshold = 500.0;
 
         /// <summary>
-        /// Loads and analyses all pressure map CSV files for a given patient
-        /// within an optional date range.
+        /// Loads and analyses all pressure map data for a given patient
+        /// from the database, aggregated by date.
         /// </summary>
-        /// <param name="patientId">The numeric patient identifier.</param>
-        /// <param name="rootFolder">Root folder where CSV files are stored.</param>
-        /// <param name="from">Inclusive start date (optional).</param>
-        /// <param name="to">Inclusive end date (optional).</param>
-        public static List<PressureTimePoint> LoadPatientHistory(
+        public static List<PressureTimePoint> LoadPatientHistoryFromDatabase(
+            AppDBContext context,
             int patientId,
-            string rootFolder,
             DateTime? from = null,
             DateTime? to = null)
         {
-            var results = new List<PressureTimePoint>();
+            var query = context.PressureMaps
+                .Where(p => p.PatientId == patientId);
 
-            if (string.IsNullOrWhiteSpace(rootFolder) || !Directory.Exists(rootFolder))
-            {
-                return results;
-            }
+            if (from.HasValue)
+                query = query.Where(p => p.Timestamp >= from.Value);
 
-            // Expected pattern: {patientId}_yyyyMMdd.csv
-            var pattern = patientId.ToString(CultureInfo.InvariantCulture) + "_*.csv";
-            var files = Directory.GetFiles(rootFolder, pattern, SearchOption.TopDirectoryOnly);
+            if (to.HasValue)
+                query = query.Where(p => p.Timestamp <= to.Value);
 
-            foreach (var file in files)
-            {
-                var date = TryParseDateFromFileName(file);
-                if (from.HasValue && date.Date < from.Value.Date) continue;
-                if (to.HasValue && date.Date > to.Value.Date) continue;
-
-                var point = AnalyseFile(file, patientId, date);
-                if (point != null)
-                {
-                    results.Add(point);
-                }
-            }
-
-            return results
+            var allRecords = query
                 .OrderBy(p => p.Timestamp)
                 .ToList();
-        }
 
-        private static PressureTimePoint? AnalyseFile(string path, int patientId, DateTime date)
-        {
-            // Read all lines and split by comma.
-            var lines = File.ReadAllLines(path);
-            if (lines.Length == 0) return null;
+            if (allRecords.Count == 0)
+                return new List<PressureTimePoint>();
 
-            var values = new List<double>();
-            foreach (var line in lines)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var parts = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var p in parts)
+            // Group by 6-hour intervals and aggregate each period's data
+            var results = allRecords
+                .GroupBy(p => 
                 {
-                    if (double.TryParse(p, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
+                    // Round down to nearest 6-hour interval
+                    var hour = p.Timestamp.Hour;
+                    var sixHourBucket = (hour / 6) * 6;
+                    return p.Timestamp.Date.AddHours(sixHourBucket);
+                })
+                .Select(group =>
+                {
+                    var periodRecords = group.ToList();
+                    var peakPressure = periodRecords.Max(r => r.PeakPressure);
+                    var avgContactArea = periodRecords.Average(r => r.ContactAreaPercent);
+                    var isHighRisk = peakPressure >= HighPressureThreshold;
+
+                    return new PressureTimePoint
                     {
-                        values.Add(v);
-                    }
-                }
-            }
+                        PatientId = patientId,
+                        Timestamp = group.Key, // Use the 6-hour bucket timestamp
+                        PeakPressure = peakPressure,
+                        ContactAreaPercent = avgContactArea,
+                        IsHighRisk = isHighRisk
+                    };
+                })
+                .OrderBy(p => p.Timestamp)
+                .ToList();
 
-            if (values.Count == 0) return null;
-
-            var totalCells = values.Count;
-            var nonZeroCells = values.Count(v => Math.Abs(v) > double.Epsilon);
-            var peak = values.Max();
-
-            var contactPercent = totalCells == 0
-                ? 0.0
-                : (double)nonZeroCells / totalCells * 100.0;
-
-            return new PressureTimePoint
-            {
-                PatientId = patientId,
-                Timestamp = date,
-                PeakPressure = peak,
-                ContactAreaPercent = contactPercent,
-                IsHighRisk = peak >= HighPressureThreshold
-            };
-        }
-
-        private static DateTime TryParseDateFromFileName(string path)
-        {
-            var fileName = Path.GetFileNameWithoutExtension(path);
-            // Expect something like "123_20251011"
-            var parts = fileName.Split('_', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                var datePart = parts[1];
-                if (DateTime.TryParseExact(
-                        datePart,
-                        "yyyyMMdd",
-                        CultureInfo.InvariantCulture,
-                        DateTimeStyles.None,
-                        out var parsed))
-                {
-                    return parsed;
-                }
-            }
-
-            // Fallback: use file creation time.
-            return File.GetCreationTime(path);
+            return results;
         }
 
         /// <summary>
-        /// Splits a full history into current and previous windows so that
-        /// simple comparison reports can be generated (current vs previous).
+        /// Splits a full history into current and previous windows.
         /// </summary>
         public static (List<PressureTimePoint> current, List<PressureTimePoint> previous)
             SplitCurrentAndPrevious(IReadOnlyList<PressureTimePoint> history)
@@ -143,7 +88,6 @@ namespace SensoreAPPMVC.Utilities
             var firstDate = history.Min(p => p.Timestamp).Date;
             var totalDays = (lastDate - firstDate).TotalDays + 1;
 
-            // Use the last half of the range as the current window.
             var halfSpan = Math.Max(1, (int)Math.Ceiling(totalDays / 2.0));
             var currentStart = lastDate.AddDays(-halfSpan + 1);
 

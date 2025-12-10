@@ -17,6 +17,38 @@ namespace SensoreAPPMVC.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
 
+            modelBuilder.Entity("SensoreAPPMVC.Models.PressureMap", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("ContactAreaPercent")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GridData")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsHighRisk")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("PeakPressure")
+                        .HasColumnType("REAL");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PressureMaps");
+                });
+
             modelBuilder.Entity("SensoreAPPMVC.Models.User", b =>
                 {
                     b.Property<int>("UserId")

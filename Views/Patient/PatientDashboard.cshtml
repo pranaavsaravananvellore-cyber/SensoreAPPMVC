@@ -4,14 +4,20 @@
 @{
     ViewData["Title"] = "Patient Dashboard";
     Layout = null;
-    var historyJson = JsonSerializer.Serialize(
-        Model.History.Select(h => new {
-            date = h.Timestamp.ToString("yyyy-MM-dd"),
-            peak = h.PeakPressure,
-            contact = h.ContactAreaPercent,
-            isHighRisk = h.IsHighRisk
+    
+    // Group history by hour and aggregate
+    var hourlyData = Model.History
+        .GroupBy(h => h.Timestamp.AddMinutes(-h.Timestamp.Minute).AddSeconds(-h.Timestamp.Second))
+        .Select(g => new {
+            date = g.Key.ToString("yyyy-MM-dd HH:00"),
+            peak = g.Max(x => x.PeakPressure),
+            contact = g.Average(x => x.ContactAreaPercent),
+            isHighRisk = g.Any(x => x.IsHighRisk)
         })
-    );
+        .OrderBy(x => x.date)
+        .ToList();
+    
+    var historyJson = JsonSerializer.Serialize(hourlyData);
 }
 
 <!DOCTYPE html>
@@ -311,9 +317,9 @@
                                 <label for="period" style="color: #9ca3af; font-size: 12px;">Period:</label>
                                 <input type="hidden" name="id" value="@Model.PatientId" />
                                 <select id="period" name="period" onchange="this.form.submit()">
-                                    <option value="7d">Last 7 days</option>
-                                    <option value="30d">Last 30 days</option>
-                                    <option value="all">All data</option>
+                                    <option value="7d" selected="@(ViewBag.SelectedPeriod == "7d")">Last 7 days</option>
+                                    <option value="30d" selected="@(ViewBag.SelectedPeriod == "30d")">Last 30 days</option>
+                                    <option value="all" selected="@(ViewBag.SelectedPeriod == "all")">All data</option>
                                 </select>
                             </form>
                         </div>
@@ -361,6 +367,152 @@
                         }
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Upload sensor data</div>
+                            <div class="card-sub">Import CSV files with pressure map recordings</div>
+                        </div>
+                        <button id="clearBtn" style="
+                            padding: 6px 12px;
+                            background-color: #dc2626;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            font-weight: 500;
+                        " onclick="clearAllData()">Clear Data</button>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <div id="upload-area" style="
+                            border: 2px dashed #374151;
+                            border-radius: 8px;
+                            padding: 24px;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " 
+                        ondrop="handleDrop(event)" 
+                        ondragover="handleDragOver(event)"
+                        ondragleave="handleDragLeave(event)">
+                            <input type="file" id="fileInput" accept=".csv" style="display: none;" onchange="uploadFile(event)">
+                            <i class='bx bx-cloud-upload' style="font-size: 32px; color: #9ca3af; display: block; margin-bottom: 8px;"></i>
+                            <div style="color: #e5e7eb; font-size: 13px; font-weight: 500;">
+                                Drop CSV file here or <span style="color: #a855f7; cursor: pointer;" onclick="document.getElementById('fileInput').click();">click to select</span>
+                            </div>
+                            <div style="color: #6b7280; font-size: 11px; margin-top: 4px;">
+                                Supported format: .CSV (pressure map data)
+                            </div>
+                        </div>
+                        <div id="upload-status" style="margin-top: 12px; display: none;">
+                            <div id="status-message" style="font-size: 12px; padding: 8px; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    const uploadArea = document.getElementById('upload-area');
+                    const statusDiv = document.getElementById('upload-status');
+                    const statusMsg = document.getElementById('status-message');
+
+                    function handleDragOver(e) {
+                        e.preventDefault();
+                        uploadArea.style.borderColor = '#a855f7';
+                        uploadArea.style.backgroundColor = 'rgba(168, 85, 247, 0.05)';
+                    }
+
+                    function handleDragLeave(e) {
+                        uploadArea.style.borderColor = '#374151';
+                        uploadArea.style.backgroundColor = 'transparent';
+                    }
+
+                    function handleDrop(e) {
+                        e.preventDefault();
+                        uploadArea.style.borderColor = '#374151';
+                        uploadArea.style.backgroundColor = 'transparent';
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            uploadFile({ target: { files: files } });
+                        }
+                    }
+
+                    function uploadFile(e) {
+                        const file = e.target.files[0];
+                        if (!file) return;
+
+                        if (!file.name.toLowerCase().endsWith('.csv')) {
+                            showStatus('Only CSV files are allowed', 'error');
+                            return;
+                        }
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        statusDiv.style.display = 'block';
+                        statusMsg.textContent = 'Uploading...';
+                        statusMsg.style.color = '#9ca3af';
+                        statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
+
+                        fetch('@Url.Action("UploadFile", "Patient")', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showStatus(`✓ Successfully imported ${data.recordCount} records`, 'success');
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                showStatus(`✗ ${data.message}`, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            showStatus(`✗ Upload failed: ${error.message}`, 'error');
+                        });
+                    }
+
+                    function clearAllData() {
+                        if (!confirm('Are you sure you want to delete all pressure map data? This cannot be undone.')) {
+                            return;
+                        }
+
+                        statusDiv.style.display = 'block';
+                        statusMsg.textContent = 'Clearing data...';
+                        statusMsg.style.color = '#9ca3af';
+                        statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
+
+                        fetch('@Url.Action("ClearData", "Patient")', {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showStatus(`✓ Deleted ${data.recordsDeleted} records`, 'success');
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                showStatus(`✗ ${data.message}`, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            showStatus(`✗ Clear failed: ${error.message}`, 'error');
+                        });
+                    }
+
+                    function showStatus(message, type) {
+                        statusMsg.textContent = message;
+                        if (type === 'success') {
+                            statusMsg.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
+                            statusMsg.style.color = '#86efac';
+                            statusMsg.style.border = '1px solid rgba(22, 163, 74, 0.5)';
+                        } else {
+                            statusMsg.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                            statusMsg.style.color = '#fca5a5';
+                            statusMsg.style.border = '1px solid rgba(220, 38, 38, 0.5)';
+                        }
+                    }
+                </script>
             </div>
         </div>
     </div>
@@ -383,17 +535,34 @@
                     {
                         label: 'Peak pressure',
                         data: peakData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        yAxisID: 'y',
                         borderWidth: 2,
-                        tension: 0.3,
-                        yAxisID: 'y'
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#1e40af',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 0,
+                        pointHitRadius: 20
                     },
                     {
                         label: 'Contact area (%)',
                         data: contactData,
+                        borderColor: '#ec4899',
+                        backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                        yAxisID: 'y1',
                         borderWidth: 2,
-                        borderDash: [4, 4],
-                        tension: 0.3,
-                        yAxisID: 'y1'
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointBackgroundColor: '#ec4899',
+                        pointBorderColor: '#be123c',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 0,
+                        pointHitRadius: 20
                     }
                 ]
             },
@@ -401,13 +570,35 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        borderColor: '#a855f7',
+                        borderWidth: 1,
+                        padding: 12,
+                        titleColor: '#e5e7eb',
+                        bodyColor: '#9ca3af',
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                            }
+                        }
+                    },
                     legend: {
                         labels: { color: '#e5e7eb', font: { size: 11 } }
                     }
                 },
                 scales: {
                     x: {
-                        ticks: { color: '#9ca3af', maxRotation: 0, autoSkip: true },
+                        ticks: { 
+                            color: '#9ca3af', 
+                            maxRotation: 45, 
+                            autoSkip: true,
+                            maxTicksLimit: 12
+                        },
                         grid: { display: false }
                     },
                     y: {
@@ -424,9 +615,22 @@
             }
         };
 
-        if (labels.length > 0) {
-            new Chart(ctx, chartConfig);
-        }
+        const chart = new Chart(ctx, chartConfig);
+
+        // Add smooth cursor tracking
+        const canvas = document.getElementById('pressureChart');
+        canvas.addEventListener('mousemove', (e) => {
+            const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
+            if (points.length > 0) {
+                chart.tooltip.setActiveElements(points);
+                chart.draw();
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            chart.tooltip.setActiveElements([]);
+            chart.draw();
+        });
     </script>
 </body>
 </html>
