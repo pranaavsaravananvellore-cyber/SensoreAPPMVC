@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SensoreAPPMVC.Data;
 using Microsoft.AspNetCore.Http;
+using SensoreAPPMVC.Services;
 
 namespace SensoreAPPMVC.Controllers
 {
@@ -12,6 +13,7 @@ namespace SensoreAPPMVC.Controllers
             _context = context;
         }
         [Route("[controller]/[action]")]
+        [RoleCheck("Clinician")]
         public async Task<IActionResult> Dashboard()
         {
             //validating cliniction access

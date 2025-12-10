@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using SensoreAPPMVC.Services;
 
 namespace SensoreAPPMVC.Controllers
 {
@@ -27,8 +28,20 @@ namespace SensoreAPPMVC.Controllers
         /// Optional period selector: "7d", "30d" or "all".
         /// This controls how much historical pressure data is loaded.
         /// </param>
+        /// 
+        [RoleCheck("Patient")]
         public async Task<IActionResult> Dashboard(int id, string? period = "7d")
         {
+            // Get logged-in user from session
+            var sessionUserId = HttpContext.Session.GetInt32("UserId");
+
+            // AUTHORIZATION CHECK: Patients can only view their own data
+            if (id != sessionUserId)
+            {
+                // Redirect to their own dashboard
+                return RedirectToAction("Dashboard", "Patient", new { id = sessionUserId });
+            }
+
             var patient = await _context.Patients
                 .FirstOrDefaultAsync(p => p.UserId == id);
 
