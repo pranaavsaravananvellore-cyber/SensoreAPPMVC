@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SensoreAPPMVC.Models
 {
@@ -12,5 +13,7 @@ namespace SensoreAPPMVC.Models
         public bool IsHighRisk { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? GridData { get; set; }  // Make nullable
+        
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
     }
 }

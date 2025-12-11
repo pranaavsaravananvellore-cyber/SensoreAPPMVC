@@ -353,7 +353,18 @@
                                         <td>@point.Timestamp.ToString("yyyy-MM-dd")</td>
                                         <td>@point.PeakPressure.ToString("F1")</td>
                                         <td>@point.ContactAreaPercent.ToString("F1")%</td>
-                                        <td><span class="pill-mini">High risk</span></td>
+                                        <td>
+                                            <button class="comment-btn" onclick="openCommentModal(event, '@point.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")');" title="View/Add comments" style="
+                                                background: none;
+                                                border: none;
+                                                color: #a855f7;
+                                                cursor: pointer;
+                                                font-size: 18px;
+                                                padding: 4px;
+                                            ">
+                                                <i class='bx bx-comment'></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 }
                                 </tbody>
@@ -412,225 +423,218 @@
                     </div>
                 </div>
 
+                <!-- Comment Modal -->
+                <div id="commentModal" style="
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 1000;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <div style="
+                        background: #111827;
+                        border: 1px solid #374151;
+                        border-radius: 8px;
+                        padding: 24px;
+                        width: 90%;
+                        max-width: 500px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="color: #e5e7eb; margin: 0;">Comments</h3>
+                            <button onclick="closeCommentModal()" style="
+                                background: none;
+                                border: none;
+                                color: #9ca3af;
+                                font-size: 24px;
+                                cursor: pointer;
+                            ">×</button>
+                        </div>
+
+                        <div id="commentsList" style="margin-bottom: 16px; min-height: 100px;"></div>
+
+                        <div style="border-top: 1px solid #374151; padding-top: 16px;">
+                            <textarea id="commentText" placeholder="Add a comment..." style="
+                                width: 100%;
+                                background: #1f2937;
+                                border: 1px solid #374151;
+                                border-radius: 6px;
+                                color: #e5e7eb;
+                                padding: 8px;
+                                font-family: inherit;
+                                font-size: 12px;
+                                resize: vertical;
+                                min-height: 60px;
+                            "></textarea>
+                            <button id="submitCommentBtn" onclick="submitComment()" style="
+                                background: #a855f7;
+                                color: white;
+                                border: none;
+                                border-radius: 6px;
+                                padding: 8px 16px;
+                                margin-top: 8px;
+                                cursor: pointer;
+                                font-weight: 500;
+                                width: 100%;
+                            ">Post Comment</button>
+                        </div>
+                    </div>
+                </div>
+
                 <script>
-                    const uploadArea = document.getElementById('upload-area');
-                    const statusDiv = document.getElementById('upload-status');
-                    const statusMsg = document.getElementById('status-message');
+                    let currentPressureMapId = null;
 
-                    function handleDragOver(e) {
-                        e.preventDefault();
-                        uploadArea.style.borderColor = '#a855f7';
-                        uploadArea.style.backgroundColor = 'rgba(168, 85, 247, 0.05)';
+                    function openCommentModal(event, timestamp) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        // Fetch the pressure map ID using the timestamp
+                        fetch(`@Url.Action("GetPressureMapId", "Patient")?timestamp=${encodeURIComponent(timestamp)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.id) {
+                                    currentPressureMapId = data.id;
+                                    loadComments();
+                                    document.getElementById('commentModal').style.display = 'flex';
+                                } else {
+                                    alert('Error: Could not find pressure map.');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error:', err);
+                                alert('Error loading comments.');
+                            });
                     }
 
-                    function handleDragLeave(e) {
-                        uploadArea.style.borderColor = '#374151';
-                        uploadArea.style.backgroundColor = 'transparent';
+                    function closeCommentModal() {
+                        document.getElementById('commentModal').style.display = 'none';
+                        currentPressureMapId = null;
                     }
 
-                    function handleDrop(e) {
-                        e.preventDefault();
-                        uploadArea.style.borderColor = '#374151';
-                        uploadArea.style.backgroundColor = 'transparent';
-                        const files = e.dataTransfer.files;
-                        if (files.length > 0) {
-                            uploadFile({ target: { files: files } });
-                        }
+                    function loadComments() {
+                        if (!currentPressureMapId) return;
+
+                        fetch(`@Url.Action("GetComments", "Patient")/${currentPressureMapId}`)
+                            .then(r => r.json())
+                            .then(comments => {
+                                const list = document.getElementById('commentsList');
+                                if (comments.length === 0) {
+                                    list.innerHTML = '<div style="color: #9ca3af; font-size: 12px;">No comments yet.</div>';
+                                } else {
+                                    list.innerHTML = comments.map(c => `
+                                        <div style="background: #1f2937; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+                                            <div style="color: #9ca3af; font-size: 11px; margin-bottom: 4px;">
+                                                ${new Date(c.createdAt).toLocaleString()}
+                                            </div>
+                                            <div style="color: #e5e7eb; font-size: 12px;">${c.text}</div>
+                                        </div>
+                                    `).join('');
+                                }
+                            })
+                            .catch(err => console.error('Error loading comments:', err));
                     }
 
-                    function uploadFile(e) {
-                        const file = e.target.files[0];
-                        if (!file) return;
-
-                        if (!file.name.toLowerCase().endsWith('.csv')) {
-                            showStatus('Only CSV files are allowed', 'error');
+                    function submitComment() {
+                        const text = document.getElementById('commentText').value.trim();
+                        if (!text) {
+                            alert('Please enter a comment.');
                             return;
                         }
 
-                        const formData = new FormData();
-                        formData.append('file', file);
-
-                        statusDiv.style.display = 'block';
-                        statusMsg.textContent = 'Uploading...';
-                        statusMsg.style.color = '#9ca3af';
-                        statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
-
-                        fetch('@Url.Action("UploadFile", "Patient")', {
+                        fetch('@Url.Action("AddComment", "Patient")', {
                             method: 'POST',
-                            body: formData
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pressureMapId: currentPressureMapId, text: text })
                         })
-                        .then(response => response.json())
+                        .then(r => r.json())
                         .then(data => {
                             if (data.success) {
-                                showStatus(`✓ Successfully imported ${data.recordCount} records`, 'success');
-                                setTimeout(() => location.reload(), 1500);
+                                document.getElementById('commentText').value = '';
+                                loadComments();
                             } else {
-                                showStatus(`✗ ${data.message}`, 'error');
+                                alert('Error posting comment: ' + data.message);
                             }
                         })
-                        .catch(error => {
-                            showStatus(`✗ Upload failed: ${error.message}`, 'error');
-                        });
+                        .catch(err => console.error('Error:', err));
                     }
 
-                    function clearAllData() {
-                        if (!confirm('Are you sure you want to delete all pressure map data? This cannot be undone.')) {
-                            return;
+                    window.onclick = function(event) {
+                        const modal = document.getElementById('commentModal');
+                        if (event.target === modal) {
+                            closeCommentModal();
                         }
-
-                        statusDiv.style.display = 'block';
-                        statusMsg.textContent = 'Clearing data...';
-                        statusMsg.style.color = '#9ca3af';
-                        statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
-
-                        fetch('@Url.Action("ClearData", "Patient")', {
-                            method: 'POST'
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                showStatus(`✓ Deleted ${data.recordsDeleted} records`, 'success');
-                                setTimeout(() => location.reload(), 1500);
-                            } else {
-                                showStatus(`✗ ${data.message}`, 'error');
+                    }
+                </script>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+                <script>
+                    // Chart.js initialization
+                    const chartData = @Html.Raw(historyJson);
+                    if (chartData && chartData.length > 0) {
+                        const ctx = document.getElementById('pressureChart').getContext('2d');
+                        const chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: chartData.map(d => d.date),
+                                datasets: [
+                                    {
+                                        label: 'Peak Pressure',
+                                        data: chartData.map(d => d.peak),
+                                        borderColor: '#a855f7',
+                                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                        tension: 0.4,
+                                        yAxisID: 'y'
+                                    },
+                                    {
+                                        label: 'Contact Area %',
+                                        data: chartData.map(d => d.contact),
+                                        borderColor: '#06b6d4',
+                                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                        tension: 0.4,
+                                        yAxisID: 'y1'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: {
+                                        labels: { color: '#e5e7eb' }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        type: 'linear',
+                                        position: 'left',
+                                        title: { display: true, text: 'Peak Pressure', color: '#e5e7eb' },
+                                        ticks: { color: '#9ca3af' },
+                                        grid: { color: 'rgba(148, 163, 175, 0.1)' }
+                                    },
+                                    y1: {
+                                        type: 'linear',
+                                        position: 'right',
+                                        title: { display: true, text: 'Contact Area %', color: '#e5e7eb' },
+                                        ticks: { color: '#9ca3af' },
+                                        grid: { drawOnChartArea: false }
+                                    },
+                                    x: {
+                                        ticks: { color: '#9ca3af' },
+                                        grid: { color: 'rgba(148, 163, 175, 0.1)' }
+                                    }
+                                }
                             }
-                        })
-                        .catch(error => {
-                            showStatus(`✗ Clear failed: ${error.message}`, 'error');
                         });
-                    }
-
-                    function showStatus(message, type) {
-                        statusMsg.textContent = message;
-                        if (type === 'success') {
-                            statusMsg.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
-                            statusMsg.style.color = '#86efac';
-                            statusMsg.style.border = '1px solid rgba(22, 163, 74, 0.5)';
-                        } else {
-                            statusMsg.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
-                            statusMsg.style.color = '#fca5a5';
-                            statusMsg.style.border = '1px solid rgba(220, 38, 38, 0.5)';
-                        }
                     }
                 </script>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const history = @Html.Raw(historyJson);
-
-        const ctx = document.getElementById('pressureChart').getContext('2d');
-
-        const labels = history.map(p => p.date);
-        const peakData = history.map(p => p.peak);
-        const contactData = history.map(p => p.contact);
-
-        const chartConfig = {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Peak pressure',
-                        data: peakData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        yAxisID: 'y',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#1e40af',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 0,
-                        pointHitRadius: 20
-                    },
-                    {
-                        label: 'Contact area (%)',
-                        data: contactData,
-                        borderColor: '#ec4899',
-                        backgroundColor: 'rgba(236, 72, 153, 0.2)',
-                        yAxisID: 'y1',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointBackgroundColor: '#ec4899',
-                        pointBorderColor: '#be123c',
-                        pointBorderWidth: 2,
-                        pointHoverRadius: 0,
-                        pointHitRadius: 20
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                        borderColor: '#a855f7',
-                        borderWidth: 1,
-                        padding: 12,
-                        titleColor: '#e5e7eb',
-                        bodyColor: '#9ca3af',
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
-                            }
-                        }
-                    },
-                    legend: {
-                        labels: { color: '#e5e7eb', font: { size: 11 } }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { 
-                            color: '#9ca3af', 
-                            maxRotation: 45, 
-                            autoSkip: true,
-                            maxTicksLimit: 12
-                        },
-                        grid: { display: false }
-                    },
-                    y: {
-                        position: 'left',
-                        ticks: { color: '#9ca3af' },
-                        grid: { color: 'rgba(31,41,55,0.6)' }
-                    },
-                    y1: {
-                        position: 'right',
-                        ticks: { color: '#9ca3af' },
-                        grid: { display: false }
-                    }
-                }
-            }
-        };
-
-        const chart = new Chart(ctx, chartConfig);
-
-        // Add smooth cursor tracking
-        const canvas = document.getElementById('pressureChart');
-        canvas.addEventListener('mousemove', (e) => {
-            const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
-            if (points.length > 0) {
-                chart.tooltip.setActiveElements(points);
-                chart.draw();
-            }
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            chart.tooltip.setActiveElements([]);
-            chart.draw();
-        });
-    </script>
 </body>
 </html>
