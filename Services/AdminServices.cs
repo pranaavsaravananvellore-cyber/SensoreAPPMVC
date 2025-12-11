@@ -153,5 +153,116 @@ namespace SensoreAPPMVC.Services
                 .OrderBy(u => u.Name)
                 .ToListAsync();
         }
+
+        public async Task<bool> UpdateSecurityQuestionsAsync(
+            int userId,
+            string question1,
+            string answer1,
+            string question2,
+            string answer2)
+        {
+            var user = await GetUserByIdAsync(userId);
+            if (user == null)
+                return false;
+
+            user.SecurityQuestion1 = question1;
+            user.SecurityAnswer1 = PasswordHasher.HashPassword(answer1.ToLower().Trim());
+            user.SecurityQuestion2 = question2;
+            user.SecurityAnswer2 = PasswordHasher.HashPassword(answer2.ToLower().Trim());
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<PasswordResetRequest> CreatePasswordResetRequestAsync(int userId, string requestType)
+        {
+            var request = new PasswordResetRequest
+            {
+                UserId = userId,
+                RequestType = requestType,
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.PasswordResetRequests.Add(request);
+            await _context.SaveChangesAsync();
+            return request;
+        }
+
+        public async Task<List<PasswordResetRequest>> GetPendingResetRequestsAsync()
+        {
+            return await _context.PasswordResetRequests
+                .Where(r => r.Status == "Pending")
+                .Include(r => r.User)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<bool> ApproveResetRequestAsync(int requestId, string newPassword)
+        {
+            var resetRequest = await _context.PasswordResetRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (resetRequest == null)
+                return false;
+
+            var user = await GetUserByIdAsync(resetRequest.UserId);
+            if (user == null)
+                return false;
+
+            user.HashedPassword = PasswordHasher.HashPassword(newPassword);
+            resetRequest.Status = "Approved";
+            resetRequest.ResolvedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RejectResetRequestAsync(int requestId, string? notes = null)
+        {
+            var resetRequest = await _context.PasswordResetRequests
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (resetRequest == null)
+                return false;
+
+            resetRequest.Status = "Rejected";
+            resetRequest.ResolvedAt = DateTime.UtcNow;
+            resetRequest.Notes = notes;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteResetRequestAsync(int requestId)
+        {
+            var request = await _context.PasswordResetRequests.FindAsync(requestId);
+            if (request == null)
+                return false;
+
+            _context.PasswordResetRequests.Remove(request);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<PasswordResetRequest?> GetResetRequestByIdAsync(int requestId)
+        {
+            return await _context.PasswordResetRequests.FindAsync(requestId);
+        }
+
+        public async Task<bool> DismissResetRequestAsync(int requestId)
+        {
+            var resetRequest = await _context.PasswordResetRequests.FindAsync(requestId);
+            if (resetRequest == null)
+                return false;
+
+            resetRequest.Status = "Dismissed";
+            resetRequest.ResolvedAt = DateTime.UtcNow;
+            
+            _context.Entry(resetRequest).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            
+            return true;
+        }
     }
 }

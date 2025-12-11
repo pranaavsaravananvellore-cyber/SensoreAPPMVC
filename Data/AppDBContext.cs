@@ -12,6 +12,7 @@ namespace SensoreAPPMVC.Data
         public DbSet<Patient> Patients { get; set; }
         public DbSet<PressureMap> PressureMaps { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

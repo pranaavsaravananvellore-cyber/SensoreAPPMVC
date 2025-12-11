@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensoreAPPMVC.Data;
 
@@ -10,9 +11,11 @@ using SensoreAPPMVC.Data;
 namespace SensoreAPPMVC.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251211020657_AddSecurityQuestions")]
+    partial class AddSecurityQuestions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -46,42 +49,6 @@ namespace SensoreAPPMVC.Migrations
                     b.HasIndex("PressureMapId1");
 
                     b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("SensoreAPPMVC.Models.PasswordResetRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RequestType")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ResolvedByAdminId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordResetRequests");
                 });
 
             modelBuilder.Entity("SensoreAPPMVC.Models.PressureMap", b =>
@@ -201,17 +168,6 @@ namespace SensoreAPPMVC.Migrations
                         .HasForeignKey("PressureMapId1");
 
                     b.Navigation("PressureMap");
-                });
-
-            modelBuilder.Entity("SensoreAPPMVC.Models.PasswordResetRequest", b =>
-                {
-                    b.HasOne("SensoreAPPMVC.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SensoreAPPMVC.Models.PressureMap", b =>

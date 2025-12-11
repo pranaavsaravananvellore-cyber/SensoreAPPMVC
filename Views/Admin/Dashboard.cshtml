@@ -263,6 +263,82 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/dist/boxicons.js"></script>
+    <script>
+        function loadAlerts() {
+            fetch('@Url.Action("GetPendingAlerts", "Admin")')
+                .then(r => r.json())
+                .then(alerts => {
+                    const container = document.getElementById('alertsContainer');
+                    
+                    if (alerts.length === 0) {
+                        container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">No pending alerts</div>';
+                        return;
+                    }
+                    
+                    container.innerHTML = alerts.map(alert => `
+                        <div style="padding: 12px; background-color: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 6px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                <span style="font-size: 11px; font-weight: 600; color: #6b21a8; display: block;">${alert.requestType}</span>
+                                <div style="font-size: 14px; font-weight: 500; color: #374151;">${alert.userName}</div>
+                                <div style="font-size: 12px; color: #6b7280;">Sent: ${alert.createdAt}</div>
+                                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                    <a href="${alert.editUrl}" style="padding: 4px 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class='bx bx-edit' style="font-size: 12px;"></i>
+                                        Edit User
+                                    </a>
+                                </div>
+                            </div>
+                            <button onclick="dismissAlert(${alert.id})" style="padding: 4px; color: #6b7280; background: none; border: none; cursor: pointer; font-size: 16px;" title="Dismiss">×</button>
+                        </div>
+                    `).join('');
+                })
+                .catch(err => console.error('Error loading alerts:', err));
+        }
+        
+        function refreshAlerts() {
+            loadAlerts();
+        }
+        
+        function dismissAlert(requestId) {
+            console.log('Dismissing alert:', requestId);
+            
+            if (confirm('Dismiss this alert?')) {
+                console.log('Sending dismiss request...');
+                
+                fetch('@Url.Action("DismissAlert", "Admin")?requestId=' + requestId, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(r => {
+                    console.log('Response status:', r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
+                    if (data.success) {
+                        console.log('Dismiss successful, reloading alerts...');
+                        loadAlerts();
+                    } else {
+                        console.error('Dismiss failed');
+                        alert('Failed to dismiss alert');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error dismissing alert: ' + err.message);
+                });
+            }
+        }
+        
+        // Load alerts on page load
+        window.addEventListener('load', loadAlerts);
+        
+        // Refresh alerts every 30 seconds
+        setInterval(loadAlerts, 30000);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -355,24 +431,12 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="card-title">Alerts</div>
+                        <button onclick="refreshAlerts()" style="background: none; border: none; cursor: pointer; font-size: 18px;" title="Refresh">
+                            <i class='bx bx-refresh'></i>
+                        </button>
                     </div>
-                    <div class="card-content">
-                        <div style="padding: 12px; background-color: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 6px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                                <span style="font-size: 11px; font-weight: 600; color: #6b21a8; display: block;">Password reset request</span>
-                                <div style="font-size: 14px; font-weight: 500; color: #374151;">Yinuach</div>
-                                <div style="font-size: 12px; color: #6b7280;">Sent: 15:00 | 13/4/2025</div>
-                            </div>
-                            <button style="padding: 4px; color: #6b7280; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
-                        </div>
-                        <div style="padding: 12px; background-color: #f3f0ff; border: 1px solid #e9d5ff; border-radius: 6px; display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                                <span style="font-size: 11px; font-weight: 600; color: #6b21a8; display: block;">Forgotten Email</span>
-                                <div style="font-size: 14px; font-weight: 500; color: #374151;">Monkey Lo Luffy</div>
-                                <div style="font-size: 12px; color: #6b7280;">Sent: 12:10 | 23/4/2025</div>
-                            </div>
-                            <button style="padding: 4px; color: #6b7280; background: none; border: none; cursor: pointer; font-size: 16px;">✕</button>
-                        </div>
+                    <div class="card-content" id="alertsContainer">
+                        <div style="text-align: center; color: #9ca3af; padding: 20px;">Loading alerts...</div>
                     </div>
                 </div>
 

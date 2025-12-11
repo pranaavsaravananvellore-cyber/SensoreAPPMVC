@@ -136,15 +136,37 @@ namespace SensoreAPPMVC.Controllers
             return Ok(new { success = true, recordsDeleted = count });
         }
 
-        [Route("Patient/GetComments/{pressureMapId}")]
-        [HttpGet]
+        [HttpGet("GetComments/{pressureMapId}")]
         public async Task<IActionResult> GetComments(int pressureMapId)
         {
-            var patientId = HttpContext.Session.GetInt32("UserId");
-            if (patientId == null) return Unauthorized();
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var userRole = HttpContext.Session.GetString("UserRole");
+            
+            if (userId == null) return Unauthorized();
+
+            // Get the pressure map to find the patient
+            var pressureMap = await _context.PressureMaps
+                .FirstOrDefaultAsync(p => p.Id == pressureMapId);
+            
+            if (pressureMap == null)
+                return NotFound(new { success = false, message = "Pressure map not found." });
+
+            // Check if user is the patient or their assigned clinician
+            var isPatient = userRole == "Patient" && pressureMap.PatientId == userId;
+            var isClinicianForPatient = false;
+
+            if (userRole == "Clinician")
+            {
+                var patient = await _context.Patients
+                    .FirstOrDefaultAsync(p => p.UserId == pressureMap.PatientId && p.ClinicianId == userId);
+                isClinicianForPatient = patient != null;
+            }
+
+            if (!isPatient && !isClinicianForPatient)
+                return Unauthorized();
 
             var comments = await _context.Comments
-                .Where(c => c.PressureMapId == pressureMapId && c.PatientId == patientId)
+                .Where(c => c.PressureMapId == pressureMapId)
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new { c.Id, c.Text, c.CreatedAt })
                 .ToListAsync();
