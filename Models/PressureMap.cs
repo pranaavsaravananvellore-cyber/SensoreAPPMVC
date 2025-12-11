@@ -11,6 +11,11 @@ namespace SensoreAPPMVC.Models
         public double ContactAreaPercent { get; set; }
         public bool IsHighRisk { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string? GridData { get; set; }  // Make nullable
+
+        // NEW: Full 32×32 zero-masked grid stored as JSON
+        public string? GridData { get; set; }
+
+        // NEW: Clinician comment
+        public string? ClinicianComment { get; set; }
     }
 }

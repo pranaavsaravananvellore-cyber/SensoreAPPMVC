@@ -1,0 +1,41 @@
+﻿@model List<SensoreAPPMVC.Models.PressureMap>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Heatmaps";
+}
+
+<h2 class="mb-4">Patient Heatmaps</h2>
+
+@if (!Model.Any())
+{
+    <p>No heatmaps found for this patient.</p>
+}
+
+@foreach (var map in Model)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <strong>@map.Timestamp.ToLocalTime().ToString("MMM dd yyyy - HH:mm")</strong>
+        </div>
+
+        <div class="card-body">
+            <canvas class="heatmap"
+                    width="320"
+                    height="320"
+                    data-grid='@map.GridData'>
+            </canvas>
+
+            <hr />
+
+            <form method="post" asp-action="SaveComment">
+                <input type="hidden" name="id" value="@map.Id" />
+
+                <label class="fw-bold mb-1">Clinician Notes:</label>
+                <textarea class="form-control" rows="3" name="comment">@map.ClinicianComment</textarea>
+
+                <button class="btn btn-primary mt-2">Save</button>
+            </form>
+        </div>
+    </div>
+}

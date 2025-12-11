@@ -23,6 +23,9 @@ namespace SensoreAPPMVC.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ClinicianComment")
+                        .HasColumnType("TEXT");
+
                     b.Property<double>("ContactAreaPercent")
                         .HasColumnType("REAL");
 

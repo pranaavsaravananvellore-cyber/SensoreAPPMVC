@@ -48,5 +48,3 @@ app.MapControllerRoute(
     defaults: new { controller = "Account", action = "Login" });
 
 app.Run();
-
-
