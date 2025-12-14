@@ -1,0 +1,649 @@
+@model SensoreAPPMVC.Models.PatientDashboardViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Patient Dashboard";
+
+    // Serialize history for the chart
+    var historyJson = JsonSerializer.Serialize(
+        Model.History.Select(h => new
+        {
+            date = h.Timestamp.ToString("yyyy-MM-dd HH:mm"),
+            peak = h.PeakPressure,
+            contact = h.ContactAreaPercent,
+            isHighRisk = h.IsHighRisk
+        })
+    );
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>@ViewData["Title"]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #1f2937;
+            color: #e5e7eb;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 80px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 0;
+            gap: 24px;
+            position: sticky;
+            left: 0;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: invert(1);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .sidebar-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #9ca3af;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+            .sidebar-btn:hover {
+                color: white;
+                background-color: rgba(55, 65, 81, 0.5);
+            }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-sub {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: #111827;
+            border-radius: 8px;
+            border: 1px solid #374151;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .pill-ok {
+            background: rgba(22,163,74,0.15);
+            color: #4ade80;
+            border: 1px solid rgba(22,163,74,0.6);
+        }
+
+        .pill-warn {
+            background: rgba(220,38,38,0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(220,38,38,0.6);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .chart-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 380px;
+        }
+
+            .chart-card > div:last-child {
+                flex: 1;
+                min-height: 300px;
+            }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+            .table th, .table td {
+                padding: 6px 8px;
+                text-align: left;
+                border-bottom: 1px solid #374151;
+                white-space: nowrap;
+            }
+
+            .table th {
+                font-weight: 500;
+                color: #9ca3af;
+            }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+            .card-header form {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+        select {
+            background: #111827;
+            border-radius: 6px;
+            border: 1px solid #374151;
+            color: #e5e7eb;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+            select:focus {
+                outline: none;
+                border-color: #a855f7;
+                background: #1f2937;
+            }
+
+        @@media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="~/images/footerLoginIcon.png" alt="Logo" class="sidebar-logo" />
+
+            <div class="sidebar-nav">
+                <!-- Heatmaps button -->
+                <a class="sidebar-btn"
+                   title="Heatmaps"
+                   href="@Url.Action("Heatmaps", "Patient", new { id = Model.PatientId })">
+                    <i class='bx bx-grid-alt'></i>
+                </a>
+            </div>
+
+            <div class="sidebar-bottom">
+                <a href="@Url.Action("Logout", "Account")" class="sidebar-btn" title="Logout">
+                    <i class='bx bx-left-arrow-alt'></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="wrapper">
+
+                <div class="header">
+                    <div>
+                        <div class="header-title">Welcome back, @Model.Name</div>
+                        <div class="header-sub">Live overview of your pressure distribution and flagged risk events.</div>
+                    </div>
+                    <div>
+                        <span class="badge">Period: @Model.SelectedPeriodLabel</span>
+                    </div>
+                </div>
+
+                <div class="cards">
+                    <div class="card">
+                        <div class="card-title">Current peak pressure</div>
+                        <div class="card-sub">Highest value in the most recent pressure map</div>
+                        <div class="metric-value">@Model.CurrentPeakPressure.ToString("F1")</div>
+                        <div class="metric-label">Peak value (units depend on sensor calibration)</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Current contact area</div>
+                        <div class="card-sub">Percentage of active (non-zero) cells</div>
+                        <div class="metric-value">@Model.CurrentContactAreaPercent.ToString("F1")%</div>
+                        <div class="metric-label">Non-zero cells across the latest map</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Risk status</div>
+                        <div class="card-sub">Automatically flagged when peak exceeds threshold</div>
+
+                        @if (Model.CurrentIsHighRisk)
+                        {
+                            <div class="pill pill-warn"><span>High-risk region detected</span></div>
+                            <div class="metric-label" style="margin-top:8px;">
+                                Peak pressure is above the configured threshold. Please review posture or offload pressure.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="pill pill-ok"><span>No high-risk regions detected</span></div>
+                            <div class="metric-label" style="margin-top:8px;">
+                                All monitored regions are currently below the high-risk threshold.
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Comparison report</div>
+                        <div class="card-sub">Current vs previous period averages</div>
+
+                        <div class="metric-label" style="margin-top:8px;">
+                            Peak: <strong>@Model.CurrentAvgPeakPressure.ToString("F1")</strong> vs
+                            <strong>@Model.PreviousAvgPeakPressure.ToString("F1")</strong>
+                        </div>
+                        <div class="metric-label">
+                            Contact: <strong>@Model.CurrentAvgContactAreaPercent.ToString("F1")%</strong> vs
+                            <strong>@Model.PreviousAvgContactAreaPercent.ToString("F1")%</strong>
+                        </div>
+                        <div class="metric-label">
+                            High-risk events: <strong>@Model.CurrentHighRiskEventCount</strong> vs
+                            <strong>@Model.PreviousHighRiskEventCount</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layout">
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Pressure metrics over time</div>
+                                <div class="card-sub">Peak pressure and contact area across the selected period</div>
+                            </div>
+
+                            <form method="get" asp-controller="Patient" asp-action="Dashboard">
+                                <label for="period" style="color:#9ca3af;font-size:12px;">Period:</label>
+                                <input type="hidden" name="id" value="@Model.PatientId" />
+                                <select id="period" name="period" onchange="this.form.submit()">
+                                    <option value="7d" selected="@(ViewBag.SelectedPeriod == "7d")">Last 7 days</option>
+                                    <option value="30d" selected="@(ViewBag.SelectedPeriod == "30d")">Last 30 days</option>
+                                    <option value="all" selected="@(ViewBag.SelectedPeriod == "all")">All data</option>
+                                </select>
+                            </form>
+                        </div>
+
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="pressureChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Flagged high-pressure events</div>
+                        <div class="card-sub">Automatically detected when peak pressure is high</div>
+
+                        @if (Model.History.Any(h => h.IsHighRisk))
+                        {
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Peak</th>
+                                        <th>Contact area</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var point in Model.History.Where(h => h.IsHighRisk).OrderByDescending(h => h.Timestamp))
+                                    {
+                                        <tr>
+                                            <td>@point.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@point.PeakPressure.ToString("F1")</td>
+                                            <td>@point.ContactAreaPercent.ToString("F1")%</td>
+                                            <td>High risk</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="metric-label" style="margin-top:8px;">
+                                No high-pressure events have been detected for the selected period.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Upload sensor data</div>
+                            <div class="card-sub">Import CSV files with pressure map recordings</div>
+                        </div>
+                        <button id="clearBtn"
+                                style="padding:6px 12px;background-color:#dc2626;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;"
+                                onclick="clearAllData()">
+                            Clear Data
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <div id="upload-area"
+                             style="border:2px dashed #374151;border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s ease;"
+                             ondrop="handleDrop(event)"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)">
+
+                            <input type="file" id="fileInput" accept=".csv" style="display:none;" onchange="uploadFile(event)">
+
+                            <i class='bx bx-cloud-upload' style="font-size:32px;color:#9ca3af;display:block;margin-bottom:8px;"></i>
+                            <div style="color:#e5e7eb;font-size:13px;font-weight:500;">
+                                Drop CSV file here or
+                                <span style="color:#a855f7;cursor:pointer;" onclick="document.getElementById('fileInput').click();">click to select</span>
+                            </div>
+                            <div style="color:#6b7280;font-size:11px;margin-top:4px;">
+                                Supported format: .CSV (pressure map data)
+                            </div>
+                        </div>
+
+                        <div id="upload-status" style="margin-top:12px;display:none;">
+                            <div id="status-message" style="font-size:12px;padding:8px;border-radius:6px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const statusDiv = document.getElementById('upload-status');
+        const statusMsg = document.getElementById('status-message');
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#a855f7';
+            uploadArea.style.backgroundColor = 'rgba(168, 85, 247, 0.05)';
+        }
+
+        function handleDragLeave(e) {
+            uploadArea.style.borderColor = '#374151';
+            uploadArea.style.backgroundColor = 'transparent';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            handleDragLeave(e);
+            const files = e.dataTransfer.files;
+            if (files.length > 0) uploadFile({ target: { files: files } });
+        }
+
+        function uploadFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showStatus('Only CSV files are allowed', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Controller signature: UploadFile(IFormFile file, int id)
+            formData.append('id', '@Model.PatientId');
+
+            statusDiv.style.display = 'block';
+            statusMsg.textContent = 'Uploading...';
+            statusMsg.style.color = '#9ca3af';
+            statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
+            statusMsg.style.border = '1px solid rgba(156, 163, 175, 0.3)';
+
+            fetch('@Url.Action("UploadFile", "Patient")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(`Successfully imported ${data.recordCount} records`, 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showStatus(`${data.message}`, 'error');
+                }
+            })
+            .catch(err => showStatus(`Upload failed: ${err.message}`, 'error'));
+        }
+
+        function clearAllData() {
+            if (!confirm('Are you sure you want to delete all pressure map data? This cannot be undone.')) return;
+
+            statusDiv.style.display = 'block';
+            statusMsg.textContent = 'Clearing data...';
+            statusMsg.style.color = '#9ca3af';
+            statusMsg.style.backgroundColor = 'rgba(156, 163, 175, 0.1)';
+            statusMsg.style.border = '1px solid rgba(156, 163, 175, 0.3)';
+
+            // Controller signature: ClearData(int patientId)
+            fetch('@Url.Action("ClearData", "Patient")?patientId=@Model.PatientId', {
+                method: 'POST'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(`Deleted ${data.recordsDeleted} records`, 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showStatus(`${data.message}`, 'error');
+                }
+            })
+            .catch(err => showStatus(`Clear failed: ${err.message}`, 'error'));
+        }
+
+        function showStatus(message, type) {
+            statusMsg.textContent = message;
+            if (type === 'success') {
+                statusMsg.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
+                statusMsg.style.color = '#86efac';
+                statusMsg.style.border = '1px solid rgba(22, 163, 74, 0.5)';
+            } else {
+                statusMsg.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                statusMsg.style.color = '#fca5a5';
+                statusMsg.style.border = '1px solid rgba(220, 38, 38, 0.5)';
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const history = @Html.Raw(historyJson);
+
+        const ctx = document.getElementById('pressureChart').getContext('2d');
+        const labels = history.map(p => p.date);
+        const peakData = history.map(p => p.peak);
+        const contactData = history.map(p => p.contact);
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Peak pressure',
+                        data: peakData,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 0,
+                        pointHitRadius: 20
+                    },
+                    {
+                        label: 'Contact area (%)',
+                        data: contactData,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 0,
+                        pointHitRadius: 20,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: { enabled: true, mode: 'index', intersect: false },
+                    legend: { labels: { color: '#e5e7eb' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#9ca3af', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+                    y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(31,41,55,0.6)' } },
+                    y1: { position: 'right', ticks: { color: '#9ca3af' }, grid: { display: false } }
+                }
+            }
+        });
+
+        const canvas = document.getElementById('pressureChart');
+        canvas.addEventListener('mousemove', (e) => {
+            const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
+            if (points.length > 0) {
+                chart.tooltip.setActiveElements(points);
+                chart.update();
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            chart.tooltip.setActiveElements([]);
+            chart.update();
+        });
+    </script>
+
+</body>
+</html>
+
+
+

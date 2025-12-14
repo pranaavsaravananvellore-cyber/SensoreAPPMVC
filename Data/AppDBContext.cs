@@ -11,6 +11,8 @@ namespace SensoreAPPMVC.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Patient> Patients { get; set; }
         public DbSet<PressureMap> PressureMaps { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,6 +26,12 @@ namespace SensoreAPPMVC.Data
             modelBuilder.Entity<User>()
                 .Property<string>("UserType")
                 .HasDefaultValue("User");
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.PressureMap)
+                .WithMany()
+                .HasForeignKey(c => c.PressureMapId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sensore</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        body {
+            background: #1f2937;
+            color: #e5e7eb;
+        }
+
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 80px;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 0;
+            gap: 24px;
+        }
+
+        .sidebar-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: invert(1);
+            cursor: default;
+        }
+
+        .sidebar-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all .2s ease;
+            font-size: 22px;
+        }
+
+            .sidebar-btn:hover {
+                color: #fff;
+                background: rgba(55,65,81,.5);
+            }
+
+            .sidebar-btn.active {
+                background: #2563eb;
+                color: #fff;
+            }
+        /* clinician accent: blue */
+        .sidebar-bottom {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <div class="sidebar">
+            <img src="~/images/footerLoginIcon.png" class="sidebar-logo" alt="Sensore" />
+
+            <!-- clinician nav -->
+            <a class="sidebar-btn @(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
+               href="@Url.Action("Dashboard", "Clinician")"
+               title="Dashboard">
+                <i class='bx bx-grid-alt'></i>
+            </a>
+
+
+            <div class="sidebar-bottom">
+                <a class="sidebar-btn" href="@Url.Action("Logout", "Account")" title="Logout">
+                    <i class='bx bx-left-arrow-alt'></i>
+                </a>
+            </div>
+        </div>
+
+        <main class="main-content" role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

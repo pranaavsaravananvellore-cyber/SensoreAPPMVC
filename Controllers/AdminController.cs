@@ -203,5 +203,53 @@ namespace SensoreAPPMVC.Controllers
 
                 return RedirectToAction("Dashboard");
             }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPendingAlerts()
+        {
+            var alerts = await _adminServices.GetPendingResetRequestsAsync();
+            
+            var alertList = alerts.Select(a => new
+            {
+                id = a.Id,
+                userId = a.UserId,
+                userName = a.User?.Name ?? "Unknown",
+                userEmail = a.User?.Email ?? "Unknown",
+                requestType = a.RequestType,
+                createdAt = a.CreatedAt.ToString("yyyy-MM-dd HH:mm"),
+                message = $"{a.User?.Name} ({a.RequestType}) requested password reset",
+                editUrl = $"/Admin/Edit/{a.UserId}"
+            }).ToList();
+            
+            return Json(alertList);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveReset([FromBody] dynamic request)
+        {
+            int requestId = request.requestId;
+            string newPassword = request.newPassword;
+            
+            var success = await _adminServices.ApproveResetRequestAsync(requestId, newPassword);
+            return Json(new { success = success });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectReset([FromBody] dynamic request)
+        {
+            int requestId = request.requestId;
+            string notes = request.notes;
+            
+            var success = await _adminServices.RejectResetRequestAsync(requestId, notes);
+            return Json(new { success = success });
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DismissAlert(int requestId)
+        {
+            var success = await _adminServices.DismissResetRequestAsync(requestId);
+            return Json(new { success = success });
+        }
     }
 }

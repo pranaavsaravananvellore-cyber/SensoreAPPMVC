@@ -1,0 +1,54 @@
+﻿@model List<SensoreAPPMVC.Models.Patient>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Select Patient";
+    ViewData["Subtitle"] = "Choose a patient to view their heatmaps";
+}
+@{
+    Layout = "~/Views/Shared/_ClinicianLayout.cshtml";
+}
+
+<div class="container">
+
+
+<div class="card-dark">
+    <h5 class="mb-3">Patients</h5>
+    @if (!Model.Any())
+    {
+        <p>No patients available.</p>
+    }
+    else
+    {
+        <table class="table table-borderless table-sm mb-0" style="color:#E5E7EB;">
+            <thead style="color:#9CA3AF;">
+                <tr>
+                    <th>Name</th>
+                    <th>DOB</th>
+                    <th>Email</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>@p.Name</td>
+                        <td>@p.DOB</td>
+                        <td>@p.Email</td>
+                        <td class="text-end">
+                            <a asp-controller="Clinician"
+                               asp-action="Heatmaps"
+                               asp-route-patientId="@p.UserId"
+                               class="btn btn-sm"
+                               style="background:#7C4DFF;color:#F9FAFB;border-radius:999px;">
+                                View heatmaps
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+</div>

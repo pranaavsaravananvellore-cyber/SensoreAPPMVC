@@ -135,5 +135,100 @@ namespace SensoreAPPMVC.Controllers
 
             return Ok(new { success = true, recordsDeleted = count });
         }
+
+        [HttpGet("GetComments/{pressureMapId}")]
+        public async Task<IActionResult> GetComments(int pressureMapId)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var userRole = HttpContext.Session.GetString("UserRole");
+            
+            if (userId == null) return Unauthorized();
+
+            // Get the pressure map to find the patient
+            var pressureMap = await _context.PressureMaps
+                .FirstOrDefaultAsync(p => p.Id == pressureMapId);
+            
+            if (pressureMap == null)
+                return NotFound(new { success = false, message = "Pressure map not found." });
+
+            // Check if user is the patient or their assigned clinician
+            var isPatient = userRole == "Patient" && pressureMap.PatientId == userId;
+            var isClinicianForPatient = false;
+
+            if (userRole == "Clinician")
+            {
+                var patient = await _context.Patients
+                    .FirstOrDefaultAsync(p => p.UserId == pressureMap.PatientId && p.ClinicianId == userId);
+                isClinicianForPatient = patient != null;
+            }
+
+            if (!isPatient && !isClinicianForPatient)
+                return Unauthorized();
+
+            var comments = await _context.Comments
+                .Where(c => c.PressureMapId == pressureMapId)
+                .OrderByDescending(c => c.CreatedAt)
+                .Select(c => new { c.Id, c.Text, c.CreatedAt })
+                .ToListAsync();
+
+            return Ok(comments);
+        }
+
+        [Route("Patient/AddComment")]
+        [HttpPost]
+        public async Task<IActionResult> AddComment([FromBody] CommentRequest request)
+        {
+            var patientId = HttpContext.Session.GetInt32("UserId");
+            if (patientId == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.Text))
+                return BadRequest(new { success = false, message = "Comment cannot be empty." });
+
+            var pressureMap = await _context.PressureMaps
+                .FirstOrDefaultAsync(p => p.Id == request.PressureMapId && p.PatientId == patientId);
+
+            if (pressureMap == null)
+                return NotFound(new { success = false, message = "Pressure map not found." });
+
+            var comment = new Comment
+            {
+                PressureMapId = request.PressureMapId,
+                PatientId = patientId.Value,
+                Text = request.Text,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                success = true, 
+                comment = new { 
+                    id = comment.Id, 
+                    text = comment.Text, 
+                    createdAt = comment.CreatedAt 
+                } 
+            });
+        }
+
+        [Route("Patient/GetPressureMapId")]
+        [HttpGet]
+        public async Task<IActionResult> GetPressureMapId(string timestamp)
+        {
+            var patientId = HttpContext.Session.GetInt32("UserId");
+            if (patientId == null) return Unauthorized();
+
+            if (!DateTime.TryParse(timestamp, out var parsedDate))
+                return BadRequest(new { success = false, message = "Invalid timestamp." });
+
+            var pressureMap = await _context.PressureMaps
+                .Where(p => p.PatientId == patientId && p.Timestamp == parsedDate)
+                .FirstOrDefaultAsync();
+
+            if (pressureMap == null)
+                return NotFound(new { success = false, message = "Pressure map not found." });
+
+            return Ok(new { id = pressureMap.Id });
+        }
     }
 }
