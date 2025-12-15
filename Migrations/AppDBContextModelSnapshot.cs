@@ -32,9 +32,6 @@ namespace SensoreAPPMVC.Migrations
                     b.Property<int>("PressureMapId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("PressureMapId1")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -42,8 +39,6 @@ namespace SensoreAPPMVC.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PressureMapId");
-
-                    b.HasIndex("PressureMapId1");
 
                     b.ToTable("Comments");
                 });
@@ -199,10 +194,6 @@ namespace SensoreAPPMVC.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SensoreAPPMVC.Models.PressureMap", null)
-                        .WithMany("Comments")
-                        .HasForeignKey("PressureMapId1");
-
                     b.Navigation("PressureMap");
                 });
 
@@ -215,11 +206,6 @@ namespace SensoreAPPMVC.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SensoreAPPMVC.Models.PressureMap", b =>
-                {
-                    b.Navigation("Comments");
                 });
 #pragma warning restore 612, 618
         }
